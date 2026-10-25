@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Access Forbidden (403) - Smart Blood Bank Network{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card card-rakt p-5 border-0 shadow-sm rounded-4">
+        <i class="fa-solid fa-shield-halved display-1 text-danger mb-3"></i>
+        <h1 class="fs-2 fw-bold">Access Denied (403)</h1>
+        <p class="text-muted small mb-4">
+          You do not have authorization to view this protected resource. Privileged access is restricted to verified healthcare administrators and authorized hospital staff.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+          <a href="{{ url_for('public.index') }}" class="btn btn-rakt-primary">
+            <i class="fa-solid fa-house me-1"></i> Return Home
+          </a>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary">
+            Sign In with Alternate Role
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

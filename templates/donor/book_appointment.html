@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Book Blood Donation Appointment - Smart Blood Bank{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Breadcrumb & Title -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{{ url_for('donor.dashboard') }}" class="text-danger text-decoration-none">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Book Donation Slot</li>
+        </ol>
+      </nav>
+
+      <div class="card card-rakt shadow-sm border-0 rounded-4">
+        <div class="card-rakt-header pb-0 pt-4 px-4 border-0">
+          <div class="d-flex align-items-center gap-3">
+            <div class="brand-icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+              <h3 class="fs-4 fw-bold mb-0">Schedule Blood Donation Appointment</h3>
+              <p class="text-muted small mb-0">Select an accredited hospital or blood bank and reserve a verified time slot.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-rakt-body p-4">
+          <!-- Stepper Guide -->
+          <div class="booking-step-indicator mt-2 mb-4 d-none d-md-flex">
+            <div class="step-item active">
+              <div class="step-circle">1</div>
+              <div class="step-title">Location & Center</div>
+            </div>
+            <div class="step-item active">
+              <div class="step-circle">2</div>
+              <div class="step-title">Date & Time Slot</div>
+            </div>
+            <div class="step-item active">
+              <div class="step-circle">3</div>
+              <div class="step-title">Pledge & Confirmation</div>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('donor.book_appointment') }}" id="appointment_booking_form">
+            <!-- Step 1: Location & Hospital Selection -->
+            <div class="p-3 bg-light rounded-3 mb-4 border">
+              <h5 class="fs-6 fw-bold text-danger mb-3">
+                <i class="fa-solid fa-location-dot me-1"></i> Step 1: Select State, District & Blood Bank
+              </h5>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">State / UT</label>
+                  <select class="form-select state-selector" id="booking_state" data-district-target="booking_district">
+                    <option value="">-- Choose State --</option>
+                    {% for st in locations.keys() %}
+                      <option value="{{ st }}" {% if selected_state == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">District / City</label>
+                  <select class="form-select" id="booking_district">
+                    <option value="">-- Choose District --</option>
+                    {% for d in locations.get(selected_state, []) %}
+                      <option value="{{ d }}" {% if selected_district == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Hospital / Blood Bank <span class="text-danger">*</span></label>
+                  <select class="form-select" name="hospital_id" id="hospital_id" required>
+                    <option value="">-- Choose Hospital / Blood Bank --</option>
+                    {% for h in hospitals %}
+                      <option value="{{ h._id }}" 
+                              data-address="{{ h.address }}" 
+                              data-phone="{{ h.phone }}"
+                              data-hours="{{ h.operating_hours }}">
+                        {{ h.name }} ({{ h.facility_type }})
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <div id="hospital_info_box" class="p-3 bg-white rounded-3 border d-none small">
+                    <!-- Populated via booking.js -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Date & Available Slots -->
+            <div class="p-3 bg-light rounded-3 mb-4 border">
+              <h5 class="fs-6 fw-bold text-danger mb-3">
+                <i class="fa-regular fa-clock me-1"></i> Step 2: Choose Appointment Date & Real-Time Time Slot
+              </h5>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" name="slot_date" id="slot_date" required>
+                  <div class="form-text small">Bookings open for the next 60 days.</div>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">Available Time Slots (Real-Time Center Capacity) <span class="text-danger">*</span></label>
+                  <input type="hidden" name="slot_time" id="selected_slot_time" required>
+                  
+                  <div id="slots_container">
+                    <div class="text-muted small py-3 text-center border bg-white rounded-3">
+                      <i class="fa-regular fa-calendar-xmark me-1"></i> Please select a hospital and date above to view real-time available donation slots.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Regular Pledge & Optional Notes -->
+            <div class="p-3 bg-light rounded-3 mb-4 border">
+              <h5 class="fs-6 fw-bold text-danger mb-3">
+                <i class="fa-solid fa-hand-holding-heart me-1"></i> Step 3: Voluntary Pledge & Preferences
+              </h5>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="is_regular_pledge" id="is_regular_pledge" {% if profile.preference_regular %}checked{% endif %}>
+                <label class="form-check-label small" for="is_regular_pledge">
+                  <strong>Pledge as Regular Voluntary Donor:</strong> Express interest to donate periodically.
+                  (Each subsequent appointment requires independent availability verification).
+                </label>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Notes for Blood Center Staff (Optional)</label>
+                <input type="text" class="form-control" name="notes" placeholder="e.g. Preferred language, first-time donor, etc.">
+              </div>
+            </div>
+
+            <!-- Pre-Donation Guidelines Callout -->
+            <div class="p-3 bg-white border border-warning rounded-3 mb-4 small text-secondary">
+              <div class="d-flex align-items-center gap-2 text-warning-emphasis fw-bold mb-1">
+                <i class="fa-solid fa-circle-exclamation fs-5"></i> Pre-Donation Check-in Reminders
+              </div>
+              <ul class="mb-0 ps-3">
+                <li>Drink at least 500ml of water and eat a healthy light meal 2 to 3 hours before donation.</li>
+                <li>Avoid alcohol or smoking for at least 24 hours prior to donation.</li>
+                <li>Bring a valid Government Photo ID (Aadhaar, Voter ID, Driving License, or Passport).</li>
+                <li>Staff will verify Hemoglobin (&ge; 12.5 g/dL) and vital parameters before donation.</li>
+              </ul>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3">
+              <a href="{{ url_for('donor.dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+              <button type="submit" class="btn btn-rakt-primary px-5" id="btn_submit_booking" disabled>
+                <i class="fa-solid fa-circle-check me-2"></i> Confirm Booking Request
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+{% endblock %}

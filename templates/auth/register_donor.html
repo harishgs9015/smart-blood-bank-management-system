@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Register as Voluntary Blood Donor - Smart Blood Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-rakt shadow-lg border-0 rounded-4">
+        <div class="card-rakt-header border-0 pb-0 pt-4 px-4 text-center flex-column">
+          <div class="brand-icon-wrapper mx-auto mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-heart-pulse"></i>
+          </div>
+          <h3 class="fs-4 fw-bold">Voluntary Donor Registration</h3>
+          <p class="text-muted small">Join India's verified network of lifesavers. No spam, full privacy controls.</p>
+        </div>
+
+        <div class="card-rakt-body p-4">
+          {% if field_errors %}
+            <div class="alert alert-danger d-flex align-items-center mb-4">
+              <i class="fa-solid fa-circle-exclamation fs-4 me-3"></i>
+              <div>
+                <strong>Please correct the errors below:</strong>
+                <ul class="mb-0 ps-3 small mt-1">
+                  {% for f, err in field_errors.items() %}
+                    <li>{{ err }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+
+          <form method="POST" action="{{ url_for('auth.register_donor') }}" class="needs-validation" novalidate id="donorRegForm">
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">1. Personal & Contact Details</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label" for="donor_name">Full Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control {% if field_errors.get('name') %}is-invalid{% endif %}" id="donor_name" name="name" value="{{ form_data.get('name', '') }}" placeholder="Enter full name as per Govt ID" required minlength="2">
+                <div class="invalid-feedback">
+                  {{ field_errors.get('name') or "Full name is required (at least 2 characters)." }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="donor_phone">Mobile Number (India) <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control {% if field_errors.get('phone') %}is-invalid{% endif %}" id="donor_phone" name="phone" value="{{ form_data.get('phone', '') }}" placeholder="10-digit mobile number" required pattern="^[6-9]\d{9}$">
+                <div class="invalid-feedback">
+                  {{ field_errors.get('phone') or "Valid 10-digit Indian mobile number starting with 6, 7, 8, or 9 is required." }}
+                </div>
+                <div class="form-text small">Stored securely and never displayed publicly.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="donor_email">Email Address <span class="text-danger">*</span></label>
+                <input type="email" class="form-control {% if field_errors.get('email') %}is-invalid{% endif %}" id="donor_email" name="email" value="{{ form_data.get('email', '') }}" placeholder="email@domain.com" required>
+                <div class="invalid-feedback">
+                  {{ field_errors.get('email') or "A valid email address is required." }}
+                  {% if field_errors.get('email') and 'already exists' in field_errors.get('email') %}
+                    <br><a href="{{ url_for('auth.login', email=form_data.get('email', '')) }}" class="btn btn-sm btn-outline-danger mt-1">Sign in with this email &rarr;</a>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="donor_dob">Date of Birth</label>
+                <input type="date" class="form-control {% if field_errors.get('dob') %}is-invalid{% endif %}" id="donor_dob" name="dob" value="{{ form_data.get('dob', '') }}">
+                <div class="invalid-feedback">
+                  {{ field_errors.get('dob') or "Must be 18 to 65 years old." }}
+                </div>
+                <div class="form-text small">Must be 18 to 65 years.</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="donor_gender">Gender</label>
+                <select name="gender" id="donor_gender" class="form-select">
+                  <option value="" disabled {% if not form_data.get('gender') %}selected{% endif %}>-- Select Gender --</option>
+                  <option value="Male" {% if form_data.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+                  <option value="Female" {% if form_data.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+                  <option value="Other" {% if form_data.get('gender') == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">2. Blood Group & Location in India</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label" for="donor_bg">Blood Group <span class="text-danger">*</span></label>
+                <select name="blood_group" id="donor_bg" class="form-select fw-bold text-danger {% if field_errors.get('blood_group') %}is-invalid{% endif %}" required>
+                  <option value="">-- Select Blood Group --</option>
+                  {% for bg in blood_groups %}
+                    <option value="{{ bg }}" {% if form_data.get('blood_group') == bg %}selected{% endif %}>{{ bg }}</option>
+                  {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                  {{ field_errors.get('blood_group') or "Please select your blood group." }}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="donor_state">State / UT <span class="text-danger">*</span></label>
+                <select name="state" id="donor_state" class="form-select state-selector {% if field_errors.get('state') %}is-invalid{% endif %}" data-district-target="donor_district" required>
+                  <option value="">-- Select State --</option>
+                  {% for st in locations.keys() %}
+                    <option value="{{ st }}" {% if form_data.get('state') == st %}selected{% endif %}>{{ st }}</option>
+                  {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                  {{ field_errors.get('state') or "Please select your State or UT." }}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="donor_district">District / City <span class="text-danger">*</span></label>
+                <select name="district" id="donor_district" class="form-select {% if field_errors.get('district') %}is-invalid{% endif %}" required>
+                  <option value="">-- Select District --</option>
+                  {% if form_data.get('state') and locations.get(form_data.get('state')) %}
+                    {% for dist in locations[form_data.get('state')] %}
+                      <option value="{{ dist }}" {% if form_data.get('district') == dist %}selected{% endif %}>{{ dist }}</option>
+                    {% endfor %}
+                  {% elif form_data.get('district') %}
+                    <option value="{{ form_data.get('district') }}" selected>{{ form_data.get('district') }}</option>
+                  {% endif %}
+                </select>
+                <div class="invalid-feedback">
+                  {{ field_errors.get('district') or "Please select your District or City." }}
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="donor_address">Address / Locality</label>
+                <input type="text" class="form-control" id="donor_address" name="address" value="{{ form_data.get('address', '') }}" placeholder="Apartment / Colony / Pincode">
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">3. Donation History & Preferences</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label" for="donor_last_donation">Last Blood Donation Date (if applicable)</label>
+                <input type="date" class="form-control" id="donor_last_donation" name="last_donation_date" value="{{ form_data.get('last_donation_date', '') }}">
+                <div class="form-text small">Used only to manage cooldown reminders (90-day guideline).</div>
+              </div>
+              <div class="col-md-6 d-flex flex-column justify-content-center">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="pref_regular" id="pref_regular" {% if form_data.get('pref_regular') %}checked{% endif %}>
+                  <label class="form-check-label small" for="pref_regular">
+                    <strong>Regular Voluntary Donor Pledge:</strong> Remind me when I become eligible for scheduled donation slots.
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="pref_emergency" id="pref_emergency" {% if form_data.get('pref_emergency') is not defined or form_data.get('pref_emergency') %}checked{% endif %}>
+                  <label class="form-check-label small" for="pref_emergency">
+                    <strong>Emergency Alerts:</strong> Allow notifications if patients in my district urgently require my blood group.
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">4. Account Security</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label" for="donor_password">Create Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control {% if field_errors.get('password') %}is-invalid{% endif %}" id="donor_password" name="password" placeholder="At least 6 characters" minlength="6" required>
+                <div class="invalid-feedback">
+                  {{ field_errors.get('password') or "Password must be at least 6 characters long." }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="donor_confirm_password">Confirm Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control {% if field_errors.get('confirm_password') %}is-invalid{% endif %}" id="donor_confirm_password" name="confirm_password" placeholder="Re-enter password" minlength="6" required>
+                <div class="invalid-feedback" id="confirmPassFeedback">
+                  {{ field_errors.get('confirm_password') or "Passwords must match." }}
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-light rounded-3 mb-4 border {% if field_errors.get('consent') %}border-danger bg-danger-subtle{% endif %}">
+              <div class="form-check">
+                <input class="form-check-input {% if field_errors.get('consent') %}is-invalid{% endif %}" type="checkbox" name="consent" id="consent" required {% if form_data.get('consent') %}checked{% endif %}>
+                <label class="form-check-label small text-secondary" for="consent">
+                  I voluntarily register to donate blood. I understand that medical eligibility (Hemoglobin &ge; 12.5 g/dL, weight &ge; 45kg, BP, medical history) is strictly verified in-person by qualified blood bank medical personnel before any collection takes place. <span class="text-danger">*</span>
+                </label>
+                <div class="invalid-feedback">
+                  {{ field_errors.get('consent') or "You must accept the voluntary donor declaration to proceed." }}
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" id="donorSubmitBtn" class="btn btn-rakt-primary w-100 py-2 fs-6">
+              <i class="fa-solid fa-heart me-2"></i> Complete Donor Registration
+            </button>
+          </form>
+
+          <div class="text-center small text-muted mt-3">
+            Already registered? <a href="{{ url_for('auth.login') }}" class="text-danger fw-semibold">Sign in here</a>
+          </div>
+        </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('donorRegForm');
+  const pass = document.getElementById('donor_password');
+  const confirmPass = document.getElementById('donor_confirm_password');
+  const submitBtn = document.getElementById('donorSubmitBtn');
+
+  function validatePasswords() {
+    if (confirmPass.value && pass.value !== confirmPass.value) {
+      confirmPass.setCustomValidity("Passwords do not match");
+      confirmPass.classList.add('is-invalid');
+      document.getElementById('confirmPassFeedback').textContent = "Passwords do not match.";
+    } else {
+      confirmPass.setCustomValidity("");
+      if (confirmPass.value) {
+        confirmPass.classList.remove('is-invalid');
+      }
+    }
+  }
+
+  pass.addEventListener('input', validatePasswords);
+  confirmPass.addEventListener('input', validatePasswords);
+
+  form.addEventListener('submit', function (e) {
+    validatePasswords();
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      e.stopPropagation();
+      form.classList.add('was-validated');
+      // Scroll to first invalid field
+      const firstInvalid = form.querySelector(':invalid');
+      if (firstInvalid) {
+        firstInvalid.focus();
+      }
+      return false;
+    }
+
+    // Form is valid - disable button and show spinner to prevent duplicate submits
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Saving Registration...';
+  });
+});
+</script>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Donors - {{ hospital.name }} ({{ hospital_id }}){% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header Breadcrumb & Hospital Details -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge bg-primary px-3 py-1 font-monospace fs-6">Hospital ID: {{ hospital_id }}</span>
+        <span class="badge bg-light text-dark border"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ hospital.location or hospital.city or 'Chennai' }}</span>
+        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fa-solid fa-shield-halved me-1"></i> Isolated Hospital Records</span>
+      </div>
+      <h2 class="fs-3 fw-bold mb-0 text-dark">{{ hospital.name }} — Connected Donors</h2>
+      <p class="text-muted small mb-0">Donors associated with this blood bank through direct registration, appointment requests, or completed donations.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('hospital.appointments') }}" class="btn btn-outline-primary">
+        <i class="fa-regular fa-calendar-check me-1"></i> View Appointments
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Highlights -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card card-rakt p-3 border-start border-4 border-primary shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Connected Donors</div>
+            <div class="fs-3 fw-bold text-dark mt-1">{{ donors|length }}</div>
+            <div class="small text-muted">Exclusively linked to {{ hospital_id }}</div>
+          </div>
+          <div class="brand-icon-wrapper bg-primary-subtle text-primary" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-users"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-rakt p-3 border-start border-4 border-danger shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Rare & Critical Donors</div>
+            {% set rare_count = donors | selectattr('blood_group', 'in', ['Bombay Blood Group (hh)', 'hh', 'O-', 'AB-']) | list | length %}
+            <div class="fs-3 fw-bold text-danger mt-1">{{ rare_count }}</div>
+            <div class="small text-muted">Bombay (hh), O-, AB- profiles</div>
+          </div>
+          <div class="brand-icon-wrapper bg-danger-subtle text-danger" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-hand-holding-droplet"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-rakt p-3 border-start border-4 border-success shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small fw-semibold text-uppercase">Data Privacy Status</div>
+            <div class="fs-5 fw-bold text-success mt-1"><i class="fa-solid fa-lock me-1"></i> Strict Isolation</div>
+            <div class="small text-muted">Other hospitals cannot access these donor records</div>
+          </div>
+          <div class="brand-icon-wrapper bg-success-subtle text-success" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <div class="card card-rakt p-3 mb-4 shadow-sm">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" id="donorSearchInput" class="form-control border-start-0" placeholder="Search by Donor ID (e.g. D001), Name, Blood Group, or Contact...">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select id="bloodGroupFilter" class="form-select">
+          <option value="">All Blood Groups</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="Bombay">Bombay Blood Group (hh)</option>
+        </select>
+      </div>
+      <div class="col-md-3 text-md-end text-muted small">
+        Showing <span id="visibleDonorCount" class="fw-bold text-dark">{{ donors|length }}</span> verified donors
+      </div>
+    </div>
+  </div>
+
+  <!-- Donors Table Card -->
+  <div class="card card-rakt shadow-sm">
+    <div class="card-rakt-header d-flex justify-content-between align-items-center">
+      <h5 class="fs-6 fw-bold mb-0">
+        <i class="fa-solid fa-address-book text-primary me-2"></i> Connected Donors Roster
+      </h5>
+      <span class="badge bg-light text-muted border">Hospital ID: {{ hospital_id }}</span>
+    </div>
+    <div class="card-rakt-body p-0">
+      {% if donors %}
+        <div class="table-responsive">
+          <table class="table table-rakt align-middle mb-0" id="donorsTable">
+            <thead>
+              <tr>
+                <th style="width: 120px;">Donor ID</th>
+                <th>Donor Name & Contact</th>
+                <th style="width: 140px;">Blood Group</th>
+                <th>Location</th>
+                <th style="width: 140px;">Donation History</th>
+                <th style="width: 160px;">Last Donation Date</th>
+                <th class="text-end" style="width: 140px;">Quick Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for donor in donors %}
+              <tr class="donor-row" 
+                  data-donor-id="{{ donor.donor_id|lower }}" 
+                  data-donor-name="{{ donor.name|lower }}" 
+                  data-blood-group="{{ donor.blood_group|lower }}" 
+                  data-contact="{{ (donor.contact or donor.phone or donor.email or '')|lower }}">
+                <td>
+                  <span class="badge bg-dark font-monospace fs-6 px-2 py-1">{{ donor.donor_id }}</span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-circle bg-danger-subtle text-danger fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 0.9rem;">
+                      {{ donor.name[:2]|upper }}
+                    </div>
+                    <div>
+                      <div class="fw-bold text-dark">{{ donor.name }}</div>
+                      <div class="small text-muted d-flex align-items-center gap-2">
+                        {% if donor.contact or donor.phone %}
+                          <span><i class="fa-solid fa-phone me-1 text-secondary"></i> {{ donor.contact or donor.phone }}</span>
+                        {% endif %}
+                        {% if donor.email %}
+                          <span><i class="fa-regular fa-envelope me-1 text-secondary"></i> {{ donor.email }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  {% if 'bombay' in donor.blood_group|lower or 'hh' in donor.blood_group|lower %}
+                    <span class="badge bg-warning text-dark border border-warning fs-6 px-2 py-1 fw-bold">
+                      <i class="fa-solid fa-star me-1 text-danger"></i> Bombay (hh)
+                    </span>
+                  {% elif '+' in donor.blood_group %}
+                    <span class="badge bg-danger fs-6 px-2 py-1 fw-bold">{{ donor.blood_group }}</span>
+                  {% else %}
+                    <span class="badge bg-dark fs-6 px-2 py-1 fw-bold">{{ donor.blood_group }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="small text-muted"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ donor.location or 'Chennai' }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fs-6">
+                    <i class="fa-solid fa-droplet me-1"></i> {{ donor.donation_history or donor.donation_count or 0 }} donations
+                  </span>
+                </td>
+                <td>
+                  {% if donor.last_donation_date %}
+                    <span class="fw-semibold text-dark small"><i class="fa-regular fa-calendar-check text-success me-1"></i> {{ donor.last_donation_date }}</span>
+                  {% else %}
+                    <span class="badge bg-light text-muted border">No prior records</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end gap-1">
+                    <a href="{{ url_for('hospital.donation_history') }}?donor_id={{ donor.donor_id }}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Record or View Donations">
+                      <i class="fa-solid fa-plus-circle me-1"></i> Record
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <i class="fa-solid fa-user-xmark fs-2 text-muted mb-2"></i>
+          <h5 class="fs-6 fw-bold">No Connected Donors Found</h5>
+          <p class="small text-muted mb-0">Donors will appear here as soon as they register with or submit donation requests to {{ hospital.name }} ({{ hospital_id }}).</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Security Protocol Footer Callout -->
+  <div class="alert alert-light border mt-4 small text-muted d-flex align-items-center gap-3">
+    <i class="fa-solid fa-shield-halved fs-4 text-primary"></i>
+    <div>
+      <strong>Strict Hospital Privacy Protocol:</strong> Donor information displayed on this screen is strictly confined to <code>{{ hospital_id }}</code>. Under no circumstances is donor medical contact information shared across different healthcare entities or competitor hospitals.
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('donorSearchInput');
+  const bgFilter = document.getElementById('bloodGroupFilter');
+  const rows = document.querySelectorAll('.donor-row');
+  const countBadge = document.getElementById('visibleDonorCount');
+
+  function filterDonors() {
+    const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+    const bgVal = (bgFilter ? bgFilter.value : '').toLowerCase().trim();
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const dId = row.getAttribute('data-donor-id') || '';
+      const dName = row.getAttribute('data-donor-name') || '';
+      const dContact = row.getAttribute('data-contact') || '';
+      const dBg = row.getAttribute('data-blood-group') || '';
+
+      const matchesText = !q || dId.includes(q) || dName.includes(q) || dContact.includes(q) || dBg.includes(q);
+      const matchesBg = !bgVal || dBg.includes(bgVal);
+
+      if (matchesText && matchesBg) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (countBadge) {
+      countBadge.textContent = visibleCount;
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('input', filterDonors);
+  if (bgFilter) bgFilter.addEventListener('change', filterDonors);
+});
+</script>
+{% endblock %}

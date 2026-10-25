@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Blood Stock Management - {{ hospital.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="fs-3 fw-bold mb-0">Blood Stock Inventory Management</h2>
+      <p class="text-muted small mb-0">{{ hospital.name }} &bull; Accredited Transfusion Center</p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-rakt-primary" data-bs-toggle="modal" data-bs-target="#addStockModal">
+        <i class="fa-solid fa-plus-circle me-1"></i> Add Blood Stock
+      </button>
+      <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#requestAssistanceModal">
+        <i class="fa-solid fa-handshake-angle me-1"></i> Request Inter-Hospital Assistance
+      </button>
+    </div>
+  </div>
+
+  <!-- Stock Table Card -->
+  <div class="card card-rakt mb-4">
+    <div class="card-rakt-header">
+      <h5 class="fs-6 fw-bold mb-0"><i class="fa-solid fa-droplet text-danger me-2"></i> Current Inventory Units by Blood Group</h5>
+      <span class="small text-muted">Audited with timestamp and user verification</span>
+    </div>
+    <div class="card-rakt-body p-0">
+      <div class="table-responsive">
+        <table class="table table-rakt align-middle">
+          <thead>
+            <tr>
+              <th>Blood Group</th>
+              <th>Current Units</th>
+              <th>Status Level</th>
+              <th>Location / Storage</th>
+              <th>Last Updated</th>
+              <th>Updated By</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stocks %}
+            <tr>
+              <td>
+                <span class="badge badge-blood-group fs-6">{{ s.blood_group }}</span>
+                <span class="small text-muted ms-1">({{ s.blood_group|bg_full_name }})</span>
+              </td>
+              <td>
+                <div class="fs-5 fw-bold text-dark">{{ s.units }} <span class="small text-muted fw-normal">units</span></div>
+              </td>
+              <td>
+                {% if s.status == 'Available' %}
+                  <span class="badge badge-stock-available"><i class="fa-solid fa-circle-check me-1"></i> Adequate (&ge; 8)</span>
+                {% elif s.status == 'Low' %}
+                  <span class="badge badge-stock-low"><i class="fa-solid fa-triangle-exclamation me-1"></i> Low Stock (3-7)</span>
+                {% else %}
+                  <span class="badge badge-stock-critical"><i class="fa-solid fa-circle-exclamation me-1"></i> Critical Shortage (&le; 2)</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="small"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ s.location or hospital.address or (hospital.district ~ ', ' ~ hospital.state) }}</span>
+              </td>
+              <td>
+                <div class="small">{{ s.last_updated|format_date }}</div>
+              </td>
+              <td>
+                <span class="small text-muted">{{ s.updated_by }}</span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-dark py-1 px-3" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#quickUpdateModal-{{ s.blood_group }}">
+                  <i class="fa-solid fa-pen-to-square me-1"></i> Update Stock
+                </button>
+              </td>
+            </tr>
+
+            <!-- Quick Adjust Modal for this Blood Group -->
+            <div class="modal fade" id="quickUpdateModal-{{ s.blood_group }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                  <form method="POST" action="{{ url_for('hospital.stock_management') }}">
+                    <input type="hidden" name="blood_group" value="{{ s.blood_group }}">
+                    <input type="hidden" name="action_type" value="update">
+                    <input type="hidden" name="redirect_to" value="{{ url_for('hospital.stock_management') }}">
+                    <div class="modal-header border-0 bg-light">
+                      <h5 class="modal-title fs-6 fw-bold">
+                        <i class="fa-solid fa-pen-to-square text-danger me-2"></i> Update Blood Stock: <span class="text-danger">{{ s.blood_group }}</span> ({{ s.blood_group|bg_full_name }})
+                      </h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">Total Units Available <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="units" value="{{ s.units }}" min="0" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">Location / Storage Vault</label>
+                        <input type="text" class="form-control" name="location" value="{{ s.location or hospital.address or (hospital.district ~ ', ' ~ hospital.state) }}" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-semibold">Reason / Transaction Type <span class="text-danger">*</span></label>
+                        <select name="reason" class="form-select" required>
+                          <option value="Routine Inventory Adjustment">Routine Inventory Adjustment</option>
+                          <option value="Voluntary Donation Camp Collection">Voluntary Donation Camp Collection</option>
+                          <option value="Dispensed for Patient Transfusion">Dispensed for Patient Transfusion</option>
+                          <option value="Expired / Discarded (Quality Control)">Expired / Discarded (Quality Control)</option>
+                          <option value="Inter-Hospital Stock Transfer">Inter-Hospital Stock Transfer</option>
+                          <option value="Emergency Restock">Emergency Restock</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0">
+                      <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" name="submit_action" value="update" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-pen-to-square me-1"></i> Update Stock
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Blood Stock Modal for stock_management.html -->
+  <div class="modal fade" id="addStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <form method="POST" action="{{ url_for('hospital.stock_management') }}">
+          <input type="hidden" name="action_type" value="save">
+          <input type="hidden" name="redirect_to" value="{{ url_for('hospital.stock_management') }}">
+          <div class="modal-header border-0 bg-light">
+            <h5 class="modal-title fs-6 fw-bold">
+              <i class="fa-solid fa-plus-circle text-danger me-2"></i> Add Blood Stock
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Blood Group <span class="text-danger">*</span></label>
+              <select name="blood_group" class="form-select fw-bold text-danger" required>
+                <option value="">-- Select Blood Group --</option>
+                {% for bg in blood_groups %}
+                  <option value="{{ bg }}">{{ bg }} ({{ bg|bg_full_name }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Available Units <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="units" min="0" placeholder="e.g. 10" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Location / Storage Vault</label>
+              <input type="text" class="form-control" name="location" value="{{ hospital.address or (hospital.district ~ ', ' ~ hospital.state) }}" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Stock Details / Notes</label>
+              <select name="reason" class="form-select">
+                <option value="Voluntary Donation Camp Collection">Voluntary Donation Camp Collection</option>
+                <option value="Routine Inventory Replenishment">Routine Inventory Replenishment</option>
+                <option value="Hospital Blood Transfer">Hospital Blood Transfer</option>
+                <option value="Initial Stock Record">Initial Stock Record</option>
+                <option value="Emergency Restock">Emergency Restock</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer bg-light border-0">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" name="submit_action" value="save" class="btn btn-rakt-primary btn-sm">
+              <i class="fa-solid fa-floppy-disk me-1"></i> Save Stock
+            </button>
+            <button type="submit" name="submit_action" value="update" class="btn btn-outline-danger btn-sm">
+              <i class="fa-solid fa-pen-to-square me-1"></i> Update Stock
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inter-Hospital Stock Assistance & Audit Trail Row -->
+  <div class="row g-4 mb-4">
+    <!-- Inter-Hospital Assistance Requests -->
+    <div class="col-lg-6">
+      <div class="card card-rakt h-100">
+        <div class="card-rakt-header">
+          <h5 class="fs-6 fw-bold mb-0">
+            <i class="fa-solid fa-hospital-user text-primary me-2"></i> Inter-Hospital Assistance Requests
+          </h5>
+          <span class="badge bg-light text-muted">{{ open_assistance|length }} Active</span>
+        </div>
+        <div class="card-rakt-body p-3">
+          {% if open_assistance %}
+            <div class="d-flex flex-column gap-3">
+              {% for req in open_assistance %}
+              <div class="p-3 border rounded-3 bg-light">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <strong class="text-primary">{{ req.requesting_hospital_name }}</strong>
+                    <div class="small text-muted">Reason: {{ req.reason }}</div>
+                  </div>
+                  <span class="badge badge-blood-group">{{ req.blood_group }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                  <span class="small fw-bold text-danger">{{ req.units_needed }} units urgently needed</span>
+                  <form method="POST" action="{{ url_for('hospital.respond_assistance', req_id=req._id) }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success py-1">
+                      <i class="fa-solid fa-hand-holding-heart me-1"></i> Accept & Assist
+                    </button>
+                  </form>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted small">
+              <i class="fa-solid fa-handshake fs-3 mb-2 opacity-50"></i>
+              <div>No open assistance requests from neighboring hospitals.</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock Update Audit Log -->
+    <div class="col-lg-6">
+      <div class="card card-rakt h-100">
+        <div class="card-rakt-header">
+          <h5 class="fs-6 fw-bold mb-0">
+            <i class="fa-solid fa-clipboard-list text-secondary me-2"></i> Stock Transaction Audit Log
+          </h5>
+          <span class="badge bg-light text-muted">Last 10 Actions</span>
+        </div>
+        <div class="card-rakt-body p-0">
+          {% if audit_logs %}
+            <div class="table-responsive">
+              <table class="table table-rakt align-middle small mb-0">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Audit Details</th>
+                    <th>Operator</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for log in audit_logs %}
+                  <tr>
+                    <td class="text-nowrap" style="font-size: 0.75rem;">{{ log.timestamp|format_date }}</td>
+                    <td>{{ log.details }}</td>
+                    <td class="text-muted" style="font-size: 0.75rem;">{{ log.performed_by }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted small">
+              No recent stock audit logs recorded.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: General Update Stock Modal -->
+<div class="modal fade" id="updateStockModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form method="POST" action="{{ url_for('hospital.stock_management') }}">
+        <div class="modal-header border-0 bg-light">
+          <h5 class="modal-title fs-6 fw-bold">Update Blood Stock Inventory</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label">Blood Group</label>
+            <select name="blood_group" class="form-select fw-bold text-danger" required>
+              {% for bg in blood_groups %}
+                <option value="{{ bg }}">{{ bg }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Total Units in Stock</label>
+            <input type="number" class="form-control" name="units" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Transaction Reason <span class="text-danger">*</span></label>
+            <select name="reason" class="form-select" required>
+              <option value="Voluntary Donation Camp Collection">Voluntary Donation Camp Collection</option>
+              <option value="Dispensed for Patient Transfusion">Dispensed for Patient Transfusion</option>
+              <option value="Expired / Discarded (Quality Control)">Expired / Discarded (Quality Control)</option>
+              <option value="Inter-Hospital Stock Transfer">Inter-Hospital Stock Transfer</option>
+              <option value="Routine Inventory Audit">Routine Inventory Audit</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-0">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm">Record Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Request Assistance Modal -->
+<div class="modal fade" id="requestAssistanceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form method="POST" action="{{ url_for('hospital.create_assistance_request') }}">
+        <div class="modal-header border-0 bg-light">
+          <h5 class="modal-title fs-6 fw-bold text-danger">
+            <i class="fa-solid fa-handshake-angle me-2"></i> Request Stock Assistance
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-3">
+            Publish a stock assistance alert to accredited blood banks in your district to manage urgent deficits.
+          </p>
+          <div class="mb-3">
+            <label class="form-label">Blood Group Needed</label>
+            <select name="blood_group" class="form-select fw-bold text-danger" required>
+              {% for bg in blood_groups %}
+                <option value="{{ bg }}">{{ bg }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Units Needed</label>
+            <input type="number" class="form-control" name="units_needed" value="2" min="1" max="15" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Urgency Level</label>
+            <select name="urgency" class="form-select">
+              <option value="Critical">Critical (Immediate surgery need)</option>
+              <option value="High" selected>High (Depletion alert)</option>
+              <option value="Standard">Standard Reserve Balancing</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Clinical Reason</label>
+            <input type="text" class="form-control" name="reason" placeholder="e.g. Critical stock depletion for emergency surgeries" required>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-0">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm">Broadcast Assistance Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

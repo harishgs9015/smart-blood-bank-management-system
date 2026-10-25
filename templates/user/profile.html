@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile & Preferences - Smart Blood Bank{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-rakt shadow-sm border-0 rounded-4">
+        <div class="card-rakt-header border-0 pb-0 pt-4 px-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="brand-icon-wrapper" style="width: 44px; height: 44px;">
+              <i class="fa-solid fa-user-gear"></i>
+            </div>
+            <div>
+              <h3 class="fs-4 fw-bold mb-0">Donor Profile & Notification Preferences</h3>
+              <p class="text-muted small mb-0">Manage your contact details, district location, and notification consent.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-rakt-body p-4">
+          <form method="POST" action="{{ url_for('donor.profile') }}">
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">1. Personal & Contact Information</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" name="name" value="{{ user.name or '' }}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-control bg-light" value="{{ user.email or '' }}" readonly disabled>
+                <div class="form-text small">Account email identifier cannot be altered.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Mobile Number (India)</label>
+                <input type="tel" class="form-control" name="phone" value="{{ user.phone or '' }}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Blood Group</label>
+                <select name="blood_group" class="form-select fw-bold text-danger">
+                  {% for bg in blood_groups %}
+                    <option value="{{ bg }}" {% if profile.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">2. Location Details in India</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">State / UT</label>
+                <select name="state" class="form-select state-selector" data-district-target="prof_district" required>
+                  {% for st in locations.keys() %}
+                    <option value="{{ st }}" {% if profile.state == st %}selected{% endif %}>{{ st }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">District / City</label>
+                <select name="district" id="prof_district" class="form-select" required>
+                  <option value="{{ profile.district }}">{{ profile.district }}</option>
+                  {% for d in locations.get(profile.state, []) %}
+                    {% if d != profile.district %}
+                      <option value="{{ d }}">{{ d }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-control" name="address" value="{{ profile.address or '' }}">
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">3. Voluntary Donation Pledges</h5>
+            <div class="p-3 bg-light rounded-3 mb-4">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="pref_regular" id="p_reg" {% if profile.preference_regular %}checked{% endif %}>
+                <label class="form-check-label small" for="p_reg">
+                  <strong>Regular Donor Pledge:</strong> Notify me when my cooldown expires for upcoming scheduled blood donation drives.
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="pref_emergency" id="p_emg" {% if profile.preference_emergency %}checked{% endif %}>
+                <label class="form-check-label small" for="p_emg">
+                  <strong>Urgent Patient Match:</strong> Notify me if a critical hospital patient in my district urgently requires my blood group.
+                </label>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">4. Notification Channels (Consent Controls)</h5>
+            <div class="p-3 bg-light rounded-3 mb-4">
+              <p class="small text-muted mb-2">Select how you want to receive booking confirmations and reminders:</p>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="notif_email" id="n_email" {% if profile.notification_preferences and profile.notification_preferences.get('email') %}checked{% endif %}>
+                <label class="form-check-label small" for="n_email">
+                  <i class="fa-regular fa-envelope me-1"></i> <strong>Email Notifications</strong> (Booking references and status updates)
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="notif_sms" id="n_sms" {% if profile.notification_preferences and profile.notification_preferences.get('sms') %}checked{% endif %}>
+                <label class="form-check-label small" for="n_sms">
+                  <i class="fa-solid fa-mobile-screen me-1"></i> <strong>SMS Text Alerts</strong> (Slot reminders 2 hours prior)
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="notif_whatsapp" id="n_wa" {% if profile.notification_preferences and profile.notification_preferences.get('whatsapp') %}checked{% endif %}>
+                <label class="form-check-label small" for="n_wa">
+                  <i class="fa-brands fa-whatsapp text-success me-1"></i> <strong>WhatsApp Notification Service</strong> (Digital booking pass)
+                </label>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3">
+              <a href="{{ url_for('donor.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-rakt-primary px-4">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

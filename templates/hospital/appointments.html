@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Donor Appointments - {{ hospital.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="fs-3 fw-bold mb-0">Donor Appointments & Attendance</h2>
+      <p class="text-muted small mb-0">{{ hospital.name }} &bull; Transfusion Medicine Department</p>
+    </div>
+    <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+    </a>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="card card-rakt p-3 mb-4">
+    <form method="GET" action="{{ url_for('hospital.appointments') }}" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">Filter by Scheduled Date</label>
+        <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_date or '' }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">Filter by Status</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">-- All Statuses --</option>
+          <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending Confirmation</option>
+          <option value="confirmed" {% if selected_status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+          <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Donation Completed</option>
+          <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-dark flex-grow-1">Filter</button>
+        <a href="{{ url_for('hospital.appointments') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Appointments List Card -->
+  <div class="card card-rakt">
+    <div class="card-rakt-header">
+      <h5 class="fs-6 fw-bold mb-0"><i class="fa-regular fa-calendar-check text-primary me-2"></i> Scheduled Appointments</h5>
+      <span class="badge bg-light text-muted">{{ appointments|length }} Records</span>
+    </div>
+    <div class="card-rakt-body p-0">
+      {% if appointments %}
+        <div class="table-responsive">
+          <table class="table table-rakt align-middle">
+            <thead>
+              <tr>
+                <th>Booking Ref</th>
+                <th>Donor Details</th>
+                <th>Blood Group</th>
+                <th>Date & Slot</th>
+                <th>Status</th>
+                <th class="text-end">Attendance & Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for appt in appointments %}
+              <tr>
+                <td>
+                  <span class="badge bg-light text-dark border font-monospace">{{ appt.booking_reference }}</span>
+                  <div class="small text-muted" style="font-size: 0.72rem;">{{ appt.created_at|format_date }}</div>
+                </td>
+                <td>
+                  <div class="fw-bold">{{ appt.donor_name }}</div>
+                  <div class="small text-muted"><i class="fa-solid fa-phone me-1"></i> {{ appt.donor_phone or 'N/A' }}</div>
+                  <div class="small text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ appt.donor_email }}</div>
+                </td>
+                <td>
+                  <span class="badge badge-blood-group fs-6">{{ appt.donor_blood_group }}</span>
+                  {% if appt.is_regular_pledge %}
+                    <div class="small text-danger fw-semibold" style="font-size: 0.72rem;"><i class="fa-solid fa-heart me-1"></i> Regular Pledge</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="fw-semibold text-danger">{{ appt.slot_date }}</div>
+                  <div class="small text-muted">{{ appt.slot_time }}</div>
+                </td>
+                <td>
+                  {% if appt.status == 'confirmed' %}
+                    <span class="badge bg-success">Confirmed</span>
+                  {% elif appt.status == 'completed' %}
+                    <span class="badge bg-primary">Completed</span>
+                    {% if appt.donation_bag_id %}
+                      <div class="small text-muted" style="font-size: 0.72rem;">Bag #{{ appt.donation_bag_id }} ({{ appt.volume_ml }}ml)</div>
+                    {% endif %}
+                  {% elif appt.status == 'rescheduled' %}
+                    <span class="badge bg-info text-dark">Rescheduled</span>
+                  {% elif appt.status == 'cancelled' %}
+                    <span class="badge bg-secondary">Cancelled</span>
+                    <div class="small text-muted" style="font-size: 0.72rem;">{{ appt.cancellation_reason }}</div>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end gap-1 flex-wrap">
+                    {% if appt.status in ['pending', 'rescheduled'] %}
+                      <!-- Confirm Button -->
+                      <form method="POST" action="{{ url_for('hospital.confirm_appointment', appointment_id=appt._id) }}">
+                        <button type="submit" class="btn btn-sm btn-success py-1 px-2" title="Confirm Slot">
+                          <i class="fa-solid fa-check me-1"></i> Confirm
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    {% if appt.status in ['confirmed', 'rescheduled'] %}
+                      <!-- Record Attendance & Donation Completion Button -->
+                      <button class="btn btn-sm btn-primary py-1 px-2" 
+                              data-bs-toggle="modal" 
+                              data-bs-target="#completeModal-{{ appt.booking_reference }}">
+                        <i class="fa-solid fa-droplet me-1"></i> Record Donation
+                      </button>
+                    {% endif %}
+
+                    {% if appt.status in ['pending', 'confirmed', 'rescheduled'] %}
+                      <!-- Cancel Button -->
+                      <button class="btn btn-sm btn-outline-danger py-1 px-2" 
+                              data-bs-toggle="modal" 
+                              data-bs-target="#hospCancelModal-{{ appt.booking_reference }}">
+                        <i class="fa-solid fa-ban"></i>
+                      </button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Modal: Record Attendance & Donation Completion -->
+              <div class="modal fade" id="completeModal-{{ appt.booking_reference }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content border-0 shadow-lg rounded-4">
+                    <form method="POST" action="{{ url_for('hospital.complete_donation', appointment_id=appt._id) }}">
+                      <div class="modal-header border-0 bg-primary text-white">
+                        <h5 class="modal-title fs-6 fw-bold">
+                          <i class="fa-solid fa-clipboard-check me-2"></i> Record Donation Attendance & Completion
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body p-4">
+                        <div class="p-3 bg-light rounded-3 mb-3 small">
+                          <div class="row g-2">
+                            <div class="col-6">Donor: <strong>{{ appt.donor_name }}</strong></div>
+                            <div class="col-6">Blood Group: <strong class="text-danger">{{ appt.donor_blood_group }}</strong></div>
+                            <div class="col-6">Slot Date: <strong>{{ appt.slot_date }}</strong></div>
+                            <div class="col-6">Ref: <code>{{ appt.booking_reference }}</code></div>
+                          </div>
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label">Blood Collection Bag Barcode / ID <span class="text-danger">*</span></label>
+                          <input type="text" class="form-control text-uppercase" name="donation_bag_id" placeholder="e.g. DL-AIIMS-2026-9081" required>
+                          <div class="form-text small">Unique physical barcode tagged on donor collection pouch.</div>
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label">Volume Collected (ml) <span class="text-danger">*</span></label>
+                          <select name="volume_ml" class="form-select" required>
+                            <option value="350">350 ml (Standard Adult Whole Blood)</option>
+                            <option value="450" selected>450 ml (High Yield Whole Blood)</option>
+                          </select>
+                        </div>
+
+                        <div class="alert alert-success small mb-0">
+                          <i class="fa-solid fa-circle-check me-1"></i>
+                          Submitting this form automatically marks the appointment completed, updates the donor's eligibility cooldown, and adds <strong>1 unit</strong> to your blood stock inventory.
+                        </div>
+                      </div>
+                      <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          <i class="fa-solid fa-check-double me-1"></i> Finalize Donation & Add Stock
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal: Hospital Cancel Appointment -->
+              <div class="modal fade" id="hospCancelModal-{{ appt.booking_reference }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content border-0 shadow-lg rounded-4">
+                    <form method="POST" action="{{ url_for('hospital.cancel_appointment', appointment_id=appt._id) }}">
+                      <div class="modal-header border-0 bg-light">
+                        <h5 class="modal-title fs-6 fw-bold text-danger">Cancel Donor Appointment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body p-4">
+                        <p class="small text-secondary mb-3">
+                          Cancel appointment <code>{{ appt.booking_reference }}</code> for {{ appt.donor_name }}. An in-app notice will be delivered to the donor.
+                        </p>
+                        <div class="mb-3">
+                          <label class="form-label">Cancellation Reason</label>
+                          <textarea class="form-control" name="reason" rows="2" placeholder="e.g. Center maintenance, equipment sterilization, or unexpected power outage" required></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Keep</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Confirm Cancellation</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <i class="fa-regular fa-calendar fs-2 text-muted mb-2"></i>
+          <h5 class="fs-6 fw-bold">No Appointments Found</h5>
+          <p class="small text-muted mb-0">No donor appointments match the selected filters.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

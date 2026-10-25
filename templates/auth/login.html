@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Smart Blood Donation & Management System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card card-rakt shadow-lg border-0 rounded-4 overflow-hidden">
+        
+        <!-- Header -->
+        <div class="card-rakt-header text-center flex-column pb-3 pt-4 border-0 bg-white">
+          <div class="brand-icon-wrapper mx-auto mb-2" style="width: 52px; height: 52px; font-size: 1.35rem; background: #ffebee; color: #b71c1c; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-droplet"></i>
+          </div>
+          <h3 class="mb-1 fs-4 fw-bold text-dark">Portal Authentication</h3>
+          <p class="text-muted small mb-0">Select your role to access your dedicated dashboard</p>
+        </div>
+
+        <!-- Role Selector Tabs: Donor Login vs Hospital Login -->
+        <div class="px-4 pt-2">
+          <div class="nav nav-pills nav-fill bg-light p-1 rounded-3 border" id="loginRoleTabs" role="tablist">
+            <button class="nav-link py-2 fw-semibold {% if active_tab != 'hospital' %}active text-white bg-danger shadow-sm{% else %}text-muted{% endif %}" 
+                    id="tab-donor-btn" 
+                    type="button" 
+                    onclick="switchLoginTab('donor')">
+              <i class="fa-solid fa-heart me-1"></i> Donor Login
+            </button>
+            <button class="nav-link py-2 fw-semibold {% if active_tab == 'hospital' %}active text-white bg-primary shadow-sm{% else %}text-muted{% endif %}" 
+                    id="tab-hospital-btn" 
+                    type="button" 
+                    onclick="switchLoginTab('hospital')">
+              <i class="fa-solid fa-hospital me-1"></i> Hospital Login
+            </button>
+          </div>
+        </div>
+
+        <div class="card-rakt-body px-4 pt-3 pb-4">
+          
+          {% if registered %}
+            <div class="alert alert-success d-flex align-items-center mb-4 shadow-sm border border-success bg-success-subtle">
+              <i class="fa-solid fa-circle-check fs-3 me-3 text-success"></i>
+              <div>
+                <div class="fw-bold text-success-emphasis">Registration Successful!</div>
+                <div class="small text-dark">Your account has been created. Please sign in below.</div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- DEMO CREDENTIALS: DONOR TAB -->
+          <div id="donor-demo-box" class="bg-light rounded-3 p-3 mb-3 border border-danger-subtle {% if active_tab == 'hospital' %}d-none{% endif %}">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small fw-bold text-danger"><i class="fa-solid fa-key me-1"></i> Test Donor Accounts (1-Click Fill):</span>
+            </div>
+            <div class="d-flex flex-column gap-2 small">
+              <a href="{{ url_for('auth.login', demo_user='donor01', tab='donor') }}" class="p-2 px-3 bg-white rounded border text-decoration-none text-dark d-flex justify-content-between align-items-center hover-shadow">
+                <div>
+                  <span class="badge bg-danger me-1">Donor 01</span>
+                  <strong>Rahul Sharma</strong> &bull; <code>donor01@example.com</code>
+                  <div class="text-muted" style="font-size: 0.75rem;">Donor ID: <strong>D001</strong> &bull; Blood: <strong>O+</strong> &bull; Location: Chennai</div>
+                </div>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Fill</span>
+              </a>
+              <a href="{{ url_for('auth.login', demo_user='donor02', tab='donor') }}" class="p-2 px-3 bg-white rounded border text-decoration-none text-dark d-flex justify-content-between align-items-center hover-shadow">
+                <div>
+                  <span class="badge bg-danger me-1">Donor 02</span>
+                  <strong>Priya Patel</strong> &bull; <code>donor02@example.com</code>
+                  <div class="text-muted" style="font-size: 0.75rem;">Donor ID: <strong>D002</strong> &bull; Blood: <strong>A+</strong> &bull; Location: Chennai</div>
+                </div>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Fill</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- DEMO CREDENTIALS: HOSPITAL TAB -->
+          <div id="hospital-demo-box" class="bg-light rounded-3 p-3 mb-3 border border-primary-subtle {% if active_tab != 'hospital' %}d-none{% endif %}">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small fw-bold text-primary"><i class="fa-solid fa-key me-1"></i> Test Hospital Accounts (1-Click Fill):</span>
+            </div>
+            <div class="d-flex flex-column gap-2 small">
+              <a href="{{ url_for('auth.login', demo_user='abc', tab='hospital') }}" class="p-2 px-3 bg-white rounded border text-decoration-none text-dark d-flex justify-content-between align-items-center hover-shadow">
+                <div>
+                  <span class="badge bg-primary me-1">H001</span>
+                  <strong>ABC Hospital</strong> &bull; <code>abc.hospital@chennai.gov.in</code>
+                  <div class="text-muted" style="font-size: 0.75rem;">Hospital ID: <strong>H001</strong> &bull; Location: <strong>Chennai</strong></div>
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Fill</span>
+              </a>
+              <a href="{{ url_for('auth.login', demo_user='xyz', tab='hospital') }}" class="p-2 px-3 bg-white rounded border text-decoration-none text-dark d-flex justify-content-between align-items-center hover-shadow">
+                <div>
+                  <span class="badge bg-secondary me-1">H002</span>
+                  <strong>XYZ Hospital</strong> &bull; <code>xyz.hospital@chennai.gov.in</code>
+                  <div class="text-muted" style="font-size: 0.75rem;">Hospital ID: <strong>H002</strong> &bull; Location: <strong>Chennai</strong></div>
+                </div>
+                <span class="badge bg-secondary-subtle text-secondary border">Fill</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- LOGIN FORM -->
+          <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+            <input type="hidden" name="role_tab" id="role_tab_input" value="{{ active_tab }}">
+
+            <div class="mb-3">
+              <label for="email" class="form-label fw-semibold small text-muted">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="fa-regular fa-envelope text-muted"></i></span>
+                <input type="email" class="form-control border-start-0" id="email" name="email" 
+                       value="{{ initial_email or '' }}"
+                       placeholder="Enter your registered email" required autofocus>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="password" class="form-label fw-semibold small text-muted mb-0">Password</label>
+              </div>
+              <div class="input-group mt-1">
+                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-key text-muted"></i></span>
+                <input type="password" class="form-control border-start-0" id="password" name="password" 
+                       value="{{ initial_pass or '' }}"
+                       placeholder="Enter your password" required>
+              </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn {% if active_tab == 'hospital' %}btn-primary{% else %}btn-rakt-primary{% endif %} w-100 py-2 fs-6 fw-semibold shadow-sm">
+              <i class="fa-solid fa-right-to-bracket me-2"></i> 
+              <span id="submitBtnText">{% if active_tab == 'hospital' %}Sign In to Hospital Dashboard{% else %}Sign In to Donor Dashboard{% endif %}</span>
+            </button>
+          </form>
+
+          <hr class="my-4 text-muted">
+
+          <div class="text-center small text-muted">
+            Need a new account?
+            <div class="mt-2 d-flex justify-content-center gap-3">
+              <a href="{{ url_for('auth.register_donor') }}" class="text-danger fw-semibold text-decoration-none">
+                <i class="fa-solid fa-heart me-1"></i> Register as Voluntary Donor
+              </a>
+              <span>&bull;</span>
+              <a href="{{ url_for('auth.register_hospital') }}" class="text-primary fw-semibold text-decoration-none">
+                <i class="fa-solid fa-hospital me-1"></i> Register Hospital
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchLoginTab(role) {
+  const donorBtn = document.getElementById('tab-donor-btn');
+  const hospitalBtn = document.getElementById('tab-hospital-btn');
+  const donorBox = document.getElementById('donor-demo-box');
+  const hospitalBox = document.getElementById('hospital-demo-box');
+  const roleInput = document.getElementById('role_tab_input');
+  const submitBtn = document.getElementById('submitBtn');
+  const submitText = document.getElementById('submitBtnText');
+
+  roleInput.value = role;
+
+  if (role === 'hospital') {
+    donorBtn.className = 'nav-link py-2 fw-semibold text-muted';
+    hospitalBtn.className = 'nav-link py-2 fw-semibold active text-white bg-primary shadow-sm';
+    donorBox.classList.add('d-none');
+    hospitalBox.classList.remove('d-none');
+    submitBtn.className = 'btn btn-primary w-100 py-2 fs-6 fw-semibold shadow-sm';
+    submitText.innerText = 'Sign In to Hospital Dashboard';
+  } else {
+    donorBtn.className = 'nav-link py-2 fw-semibold active text-white bg-danger shadow-sm';
+    hospitalBtn.className = 'nav-link py-2 fw-semibold text-muted';
+    donorBox.classList.remove('d-none');
+    hospitalBox.classList.add('d-none');
+    submitBtn.className = 'btn btn-rakt-primary w-100 py-2 fs-6 fw-semibold shadow-sm';
+    submitText.innerText = 'Sign In to Donor Dashboard';
+  }
+}
+</script>
+{% endblock %}

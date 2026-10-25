@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Contact & Academic Project Info - Smart Blood Bank Network{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card card-rakt shadow-lg border-0 rounded-4 overflow-hidden mb-4">
+        <div class="row g-0">
+          <div class="col-lg-5 text-white p-4 p-md-5 d-flex flex-column justify-content-between" 
+               style="background: linear-gradient(135deg, #B71C1C 0%, #880E4F 100%);">
+            <div>
+              <div class="brand-icon-wrapper mb-3" style="width: 48px; height: 48px; background: rgba(255,255,255,0.2);">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+              <h3 class="fs-4 fw-bold text-white mb-2">College Project Demonstration</h3>
+              <p class="small text-white-50 mb-4">
+                Smart Blood Donation and Blood Bank Management System for India. Built as an academic full-stack prototype demonstrating secure healthcare technology.
+              </p>
+
+              <div class="mb-4 small">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <i class="fa-solid fa-code text-warning"></i>
+                  <span>Flask 3 &bull; PyMongo &bull; MongoDB Atlas</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <i class="fa-solid fa-palette text-info"></i>
+                  <span>HTML5, Vanilla JS, Bootstrap 5.3</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fa-solid fa-shield-halved text-success"></i>
+                  <span>Role-Based Access & Atomic Slot Locking</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="small border-top border-white-50 pt-3 text-white-50">
+              <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>
+              <strong>Notice:</strong> This software is an academic engineering demonstration and is not connected to live government emergency medical dispatchers.
+            </div>
+          </div>
+
+          <div class="col-lg-7 p-4 p-md-5">
+            <h4 class="fs-5 fw-bold mb-3">Project Feedback & Inquiries</h4>
+            <p class="small text-muted mb-4">Leave feedback or simulate an institutional collaboration inquiry.</p>
+
+            <form method="POST" action="{{ url_for('public.contact') }}">
+              <div class="mb-3">
+                <label class="form-label">Your Name</label>
+                <input type="text" class="form-control" name="name" placeholder="Prof. / Dr. / Student Name" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-control" name="email" placeholder="name@college.edu" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Subject</label>
+                <input type="text" class="form-control" name="subject" placeholder="e.g. Project Evaluation / Feature Feedback" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Message / Observations</label>
+                <textarea class="form-control" name="message" rows="4" placeholder="Enter your comments regarding the system architecture or user interface..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-rakt-primary w-100 py-2">
+                <i class="fa-solid fa-paper-plane me-1"></i> Send Feedback
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Find Blood & Verified Hospitals - Smart Blood Bank (India){% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <div class="hero-pill mb-2">
+      <i class="fa-solid fa-hospital-user"></i> National Blood Directory
+    </div>
+    <h2 class="fs-3 fw-bold mb-1">Search Available Blood Units & Hospitals</h2>
+    <p class="text-muted small mb-0">
+      Locate verified hospital blood banks across Indian states and districts with audited inventory levels.
+    </p>
+  </div>
+
+  <!-- Search Filter Card -->
+  <div class="card card-rakt p-4 mb-4">
+    <form method="GET" action="{{ url_for('public.find_blood') }}" class="row g-3 align-items-end" id="findBloodForm">
+      <div class="col-md-3">
+        <label class="form-label">Blood Group Needed</label>
+        <select name="blood_group" id="find_blood_group" class="form-select fw-bold text-danger">
+          <option value="">-- All Blood Groups --</option>
+          {% for bg in blood_groups %}
+            <option value="{{ bg }}" {% if selected_blood_group and (selected_blood_group == bg or selected_blood_group|normalize_bg == bg) %}selected{% endif %}>
+              {{ bg|bg_full_name }} ({{ bg }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">State / UT</label>
+        <select name="state" id="find_state" class="form-select state-selector" data-district-target="find_district">
+          <option value="">-- All States --</option>
+          {% for st in locations.keys() %}
+            <option value="{{ st }}" {% if selected_state == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">District / City</label>
+        <select name="district" id="find_district" class="form-select">
+          <option value="">-- All Districts --</option>
+          {% if selected_state %}
+            {% for d in locations.get(selected_state, []) %}
+              <option value="{{ d }}" {% if selected_district == d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-rakt-primary flex-grow-1" id="searchSubmitBtn">
+          <i class="fa-solid fa-search me-1"></i> Search Centers
+        </button>
+        <a href="{{ url_for('public.find_blood') }}" class="btn btn-outline-secondary" id="clearSearchBtn" title="Reset all filters">
+          <i class="fa-solid fa-rotate-left me-1"></i> Clear
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Disclaimer Notice -->
+  <div class="alert alert-light border small text-muted mb-4 d-flex align-items-center gap-2">
+    <i class="fa-solid fa-triangle-exclamation text-warning fs-5"></i>
+    <div>
+      <strong>Notice for Patients & Families:</strong> Stock counts are updated periodically by hospital blood banks. Always call the emergency helpline of the respective blood bank to confirm physical unit availability and reserve cross-matched units before dispatching transport.
+    </div>
+  </div>
+
+  <!-- Available Blood Banks Section Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="fs-5 fw-bold mb-1 text-dark">
+        <i class="fa-solid fa-hospital-user me-2 text-danger"></i> Available Blood Banks
+        {% if selected_state %}
+          <span class="text-secondary fw-normal fs-6">in {{ selected_state }}{% if selected_district %}, {{ selected_district }}{% endif %}</span>
+        {% endif %}
+      </h3>
+      <p class="text-muted small mb-0">Verified medical centers with audited live inventory in the national network.</p>
+    </div>
+    {% if results %}
+      <span class="badge bg-light text-dark border px-3 py-2">
+        <strong>{{ results|length }}</strong> verified center{% if results|length != 1 %}s{% endif %} found
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Search Results Listing -->
+  <div class="row g-4">
+    {% if results %}
+      {% for item in results %}
+      {% set h = item.hospital %}
+      {% set stocks = item.stocks %}
+      <div class="col-lg-6">
+        <div class="card card-rakt h-100 p-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <span class="badge bg-secondary mb-1" style="font-size: 0.72rem;">{{ h.facility_type }}</span>
+              <h5 class="fs-5 fw-bold mb-1">{{ h.name }}</h5>
+              <div class="small text-muted"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ h.address }}</div>
+              <div class="mt-1">
+                <span class="badge bg-light text-secondary border me-1">{{ h.district }}, {{ h.state }}</span>
+              </div>
+            </div>
+            {% if h.status == 'verified' %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle">
+              <i class="fa-solid fa-circle-check me-1"></i> Verified
+            </span>
+            {% else %}
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+              <i class="fa-solid fa-clock me-1"></i> Pending Verification
+            </span>
+            {% endif %}
+          </div>
+
+          <div class="row g-2 my-2 py-2 border-top border-bottom small text-secondary">
+            <div class="col-6">
+              <i class="fa-solid fa-phone text-muted me-1"></i> Desk: <strong>{{ h.phone }}</strong>
+            </div>
+            <div class="col-6">
+              <i class="fa-solid fa-phone-volume text-danger me-1"></i> Emergency: <strong>{{ h.emergency_phone }}</strong>
+            </div>
+            <div class="col-12">
+              <i class="fa-solid fa-clock text-muted me-1"></i> Operating Hours: {{ h.operating_hours }}
+            </div>
+          </div>
+
+          <!-- Highlight Target Blood Group If Filtered -->
+          {% if selected_blood_group %}
+            {% set sel_norm = selected_blood_group|normalize_bg %}
+            {% set target_st = stocks.get(sel_norm) %}
+            {% set target_units = target_st.units if target_st else 0 %}
+            <div class="alert alert-light border-danger-subtle d-flex justify-content-between align-items-center py-2 px-3 mb-3" style="background-color: #FFF1F2;">
+              <div>
+                <span class="text-muted small">Selected Blood Group:</span>
+                <strong class="text-danger ms-1 fs-6">{{ sel_norm|bg_full_name }} ({{ sel_norm }})</strong>
+              </div>
+              <div>
+                <span class="badge {% if target_units <= 2 %}bg-danger{% elif target_units <= 7 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6 px-3 py-1">
+                  {{ target_units }} units available
+                </span>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Stock Level Badges for this Hospital -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small fw-bold text-muted"><i class="fa-solid fa-boxes-stacked text-danger me-1"></i> Available Blood Units by Group:</span>
+              <span class="text-muted" style="font-size: 0.72rem;"><i class="fa-solid fa-database me-1"></i> Live Database Inventory</span>
+            </div>
+            <div class="row g-2">
+              {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                {% set st = stocks.get(bg) %}
+                {% set units = st.units if st else 0 %}
+                {% set is_selected = (selected_blood_group and (selected_blood_group == bg or selected_blood_group|normalize_bg == bg)) %}
+                <div class="col-6 col-sm-3">
+                  <div class="border rounded-2 p-2 text-center h-100 d-flex flex-column justify-content-center"
+                       style="background: {% if is_selected %}#FFF1F2; border-color: #B71C1C !important; box-shadow: 0 0 0 1px #B71C1C;{% else %}#F8FAFC{% endif %};">
+                    <div class="fw-bold text-danger mb-1" style="font-size: 0.8rem;">
+                      {{ bg|bg_full_name }} <span class="text-muted fw-normal" style="font-size: 0.68rem;">({{ bg }})</span>
+                    </div>
+                    <div class="fw-bold fs-6 {% if units <= 2 %}text-danger{% elif units <= 7 %}text-warning-emphasis{% else %}text-success{% endif %}">
+                      {{ units }} <span class="text-muted fw-normal" style="font-size: 0.72rem;">units</span>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="text-muted mt-2 text-end" style="font-size: 0.72rem;">
+              *Demonstration values loaded live from hospital stock management.
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="mt-auto d-flex gap-2 pt-2">
+            {% if current_user and current_user.role == 'donor' %}
+              <a href="{{ url_for('donor.book_appointment') }}" class="btn btn-sm btn-rakt-primary flex-grow-1">
+                <i class="fa-solid fa-calendar-plus me-1"></i> Book Donation Slot Here
+              </a>
+            {% else %}
+              <a href="{{ url_for('public.request_blood') }}" class="btn btn-sm btn-danger flex-grow-1">
+                <i class="fa-solid fa-hand-holding-medical me-1"></i> Request Blood from Center
+              </a>
+            {% endif %}
+            <a href="tel:{{ h.emergency_phone }}" class="btn btn-sm btn-outline-dark" title="Call Blood Center">
+              <i class="fa-solid fa-phone"></i> Call
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12 text-center py-5">
+        <i class="fa-solid fa-magnifying-glass-location fs-1 text-muted mb-3 opacity-50"></i>
+        <h4 class="fs-5 fw-bold">No Verified Centers Found</h4>
+        <p class="text-muted small mb-3">Try widening your search to all districts or selecting another state.</p>
+        <a href="{{ url_for('public.find_blood') }}" class="btn btn-rakt-outline btn-sm">
+          <i class="fa-solid fa-rotate-left me-1"></i> Clear Search Filters
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

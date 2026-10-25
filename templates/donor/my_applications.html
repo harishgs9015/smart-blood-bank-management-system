@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}My Applications - Smart Blood Donation System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb & Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fa-solid fa-file-lines text-danger me-2"></i> My Applications
+      </h3>
+      <p class="text-muted small mb-0">All blood donation requests submitted by you across registered hospitals</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('donor.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('donor.my_appointments') }}" class="btn btn-outline-danger btn-sm">
+        <i class="fa-solid fa-calendar-check me-1"></i> My Appointments
+      </a>
+      <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-rakt-primary btn-sm">
+        <i class="fa-solid fa-plus me-1"></i> New Request
+      </a>
+    </div>
+  </div>
+
+  <!-- Applications Table Card -->
+  <div class="card card-rakt border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+      <span class="small fw-bold text-muted text-uppercase">
+        Submitted Donation Requests ({{ applications|length }} total)
+      </span>
+      <span class="badge bg-light text-dark border">Real-Time Database Records</span>
+    </div>
+
+    <div class="card-body p-0">
+      {% if applications %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted small text-uppercase">
+              <tr>
+                <th class="ps-4">Hospital</th>
+                <th>Blood Group</th>
+                <th>Requested Date</th>
+                <th>Requested Time</th>
+                <th>Request ID</th>
+                <th>Status</th>
+                <th class="text-end pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for app in applications %}
+                {% set st = (app.status or 'Pending')|capitalize %}
+                <tr>
+                  <td class="ps-4">
+                    <div class="fw-bold text-dark">{{ app.hospital_name }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">
+                      <i class="fa-solid fa-hospital text-danger me-1"></i> ID: <strong>{{ app.hospital_id }}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-danger-subtle text-danger fw-bold border border-danger-subtle px-2 py-1">
+                      {{ app.blood_group or app.donor_blood_group }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ app.appointment_date or app.slot_date }}</div>
+                  </td>
+                  <td>
+                    <div class="text-muted small">{{ app.appointment_time or app.slot_time }}</div>
+                  </td>
+                  <td>
+                    <code>{{ app.request_id or app.booking_reference }}</code>
+                  </td>
+                  <td>
+                    {% if st == 'Confirmed' %}
+                      <span class="badge bg-success-subtle text-success border border-success px-3 py-1">
+                        🟢 Confirmed
+                      </span>
+                    {% elif st == 'Rejected' %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1">
+                        🔴 Rejected
+                      </span>
+                    {% elif st == 'Rescheduled' %}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1">
+                        🟡 Rescheduled
+                      </span>
+                    {% elif st == 'Completed' %}
+                      <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1">
+                        🔵 Completed
+                      </span>
+                    {% else %}
+                      <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-1">
+                        🟡 Pending
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end pe-4">
+                    {% if st == 'Rescheduled' %}
+                      <a href="{{ url_for('donor.my_appointments') }}" class="btn btn-sm btn-outline-warning">
+                        <i class="fa-solid fa-eye me-1"></i> View Update
+                      </a>
+                    {% elif st == 'Confirmed' %}
+                      <a href="{{ url_for('donor.my_appointments') }}" class="btn btn-sm btn-outline-success">
+                        <i class="fa-solid fa-ticket me-1"></i> View Slip
+                      </a>
+                    {% else %}
+                      <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="modal" data-bs-target="#appModal{{ loop.index }}">
+                        <i class="fa-solid fa-circle-info me-1"></i> Details
+                      </button>
+                    {% endif %}
+                  </td>
+                </tr>
+
+                <!-- Details Modal -->
+                <div class="modal fade" id="appModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                      <div class="modal-header bg-light border-0">
+                        <h5 class="modal-title fw-bold">Donation Request Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body p-4">
+                        <div class="mb-3">
+                          <label class="text-muted small d-block">Hospital</label>
+                          <strong class="fs-6 text-dark">{{ app.hospital_name }}</strong>
+                          <span class="badge bg-secondary-subtle text-dark ms-2">ID: {{ app.hospital_id }}</span>
+                        </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-6">
+                            <label class="text-muted small d-block">Blood Group</label>
+                            <span class="badge bg-danger fs-6">{{ app.blood_group or app.donor_blood_group }}</span>
+                          </div>
+                          <div class="col-6">
+                            <label class="text-muted small d-block">Current Status</label>
+                            <span class="fw-bold">{{ st }}</span>
+                          </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                          <div class="col-6">
+                            <label class="text-muted small d-block">Requested Date</label>
+                            <strong>{{ app.appointment_date or app.slot_date }}</strong>
+                          </div>
+                          <div class="col-6">
+                            <label class="text-muted small d-block">Requested Time</label>
+                            <strong>{{ app.appointment_time or app.slot_time }}</strong>
+                          </div>
+                        </div>
+                        {% if app.additional_details or app.notes %}
+                          <div class="mb-3">
+                            <label class="text-muted small d-block">Additional Details</label>
+                            <div class="p-2 bg-light rounded small">{{ app.additional_details or app.notes }}</div>
+                          </div>
+                        {% endif %}
+                        <div class="small text-muted border-top pt-2">
+                          Request Reference: <code>{{ app.request_id or app.booking_reference }}</code><br>
+                          Created At: {{ app.created_at }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-clipboard-list fs-1 text-danger opacity-25 mb-3"></i>
+          <h5>No Donation Requests Submitted Yet</h5>
+          <p class="small text-muted mb-3">Select an accredited hospital to send your first donation request.</p>
+          <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-rakt-primary btn-sm px-4">
+            <i class="fa-solid fa-hospital me-1"></i> Browse Registered Hospitals
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

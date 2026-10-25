@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Blood Request - Smart Blood Bank Network (India){% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-rakt shadow-lg border-0 rounded-4">
+        <div class="card-rakt-header border-0 pb-0 pt-4 px-4 text-center flex-column">
+          <div class="brand-icon-wrapper mx-auto mb-2" style="width: 48px; height: 48px; font-size: 1.25rem;">
+            <i class="fa-solid fa-hand-holding-medical"></i>
+          </div>
+          <h3 class="fs-4 fw-bold">Submit Patient Blood Request</h3>
+          <p class="text-muted small">Register an emergency or scheduled surgery blood request across verified blood banks in India.</p>
+        </div>
+
+        <div class="card-rakt-body p-4">
+          <form method="POST" action="{{ url_for('public.request_blood') }}">
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">1. Patient & Transfusion Requirements</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Patient Full Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="patient_name" value="{{ form_data.patient_name or '' }}" placeholder="Patient Name" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Required Blood Group <span class="text-danger">*</span></label>
+                <select name="blood_group" class="form-select fw-bold text-danger" required>
+                  <option value="">-- Group --</option>
+                  {% for bg in blood_groups %}
+                    <option value="{{ bg }}" {% if form_data.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Units Needed <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" name="units_needed" value="{{ form_data.units_needed or 1 }}" min="1" max="10" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Urgency Level <span class="text-danger">*</span></label>
+                <select name="urgency" class="form-select" required>
+                  <option value="Emergency" class="text-danger fw-bold">Emergency (Within 2 Hours / Operation Theater)</option>
+                  <option value="Urgent" selected>Urgent (Within 24 Hours)</option>
+                  <option value="Standard">Standard (Planned Elective Surgery)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Doctor Case Ref / Prescription No. <span class="text-muted fw-normal">(Optional)</span></label>
+                <input type="text" class="form-control" name="doctor_case_ref" value="{{ form_data.doctor_case_ref or '' }}" placeholder="e.g. AIIMS-SURG-9842 (if known)">
+                <div class="form-text small">Helpful for hospital cross-matching, but not required to submit.</div>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">2. Hospital Where Patient is Admitted</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Treating Hospital Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="hospital_name" value="{{ form_data.hospital_name or '' }}" placeholder="e.g. Safdarjung Hospital" required>
+                <div class="form-text small">Name of the facility where patient is undergoing care.</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">State / UT <span class="text-danger">*</span></label>
+                <select name="hospital_state" class="form-select state-selector" data-district-target="req_district" required>
+                  <option value="">-- Choose State --</option>
+                  {% for st in locations.keys() %}
+                    <option value="{{ st }}" {% if form_data.hospital_state == st %}selected{% endif %}>{{ st }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">District / City <span class="text-danger">*</span></label>
+                <select name="hospital_district" id="req_district" class="form-select" required>
+                  <option value="">-- Choose District --</option>
+                  {% if form_data.hospital_district %}
+                    <option value="{{ form_data.hospital_district }}" selected>{{ form_data.hospital_district }}</option>
+                  {% endif %}
+                </select>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-danger border-bottom pb-2 mb-3">3. Requester Contact Information</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Attendant / Family Contact Mobile <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" name="requester_phone" value="{{ form_data.requester_phone or '' }}" placeholder="+91 98765 43210" required>
+                <div class="form-text small">Used for SMS/phone verification by the blood center.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Requester Name <span class="text-muted fw-normal">(Optional)</span></label>
+                <input type="text" class="form-control" name="requester_name" value="{{ form_data.requester_name or '' }}" placeholder="Name of attendant/relative">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address <span class="text-muted fw-normal">(Optional)</span></label>
+                <input type="email" class="form-control" name="requester_email" value="{{ form_data.requester_email or '' }}" placeholder="name@domain.com">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Clinical / Surgery Notes <span class="text-muted fw-normal">(Optional)</span></label>
+                <input type="text" class="form-control" name="medical_notes" value="{{ form_data.medical_notes or '' }}" placeholder="e.g. Surgery on Thursday, PRBC needed">
+              </div>
+            </div>
+
+            <div class="alert alert-warning small mb-4">
+              <i class="fa-solid fa-triangle-exclamation me-1"></i>
+              <strong>Verification Safeguard:</strong> All public requests are verified by participating blood center staff before physical allotment. Compatibility and transfusion decisions belong solely to certified medical practitioners.
+            </div>
+
+            <button type="submit" class="btn btn-rakt-primary w-100 py-2 fs-6">
+              <i class="fa-solid fa-paper-plane me-2"></i> Submit Request & Generate Tracking Code
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

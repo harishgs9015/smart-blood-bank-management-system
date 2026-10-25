@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Donor Dashboard - Smart Blood Donation System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Donor Header Profile Banner -->
+  <div class="card card-rakt border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+    <div class="card-body p-4 bg-gradient-danger text-white position-relative" style="background: linear-gradient(135deg, #b71c1c 0%, #880e4f 100%);">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-white text-danger d-flex align-items-center justify-content-center shadow" style="width: 64px; height: 64px; font-size: 1.75rem; font-weight: 800;">
+            {{ blood_group }}
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h3 class="fw-bold mb-0 text-white">{{ user.name or session.name or 'Rahul Sharma' }}</h3>
+              <span class="badge bg-white text-danger fw-bold px-2 py-1" style="font-size: 0.8rem;">Donor ID: {{ donor_id }}</span>
+            </div>
+            <div class="small text-white-50 mt-1 d-flex flex-wrap gap-3">
+              <span><i class="fa-solid fa-droplet text-warning me-1"></i> Blood Group: <strong class="text-white">{{ blood_group }}</strong></span>
+              <span><i class="fa-solid fa-phone me-1"></i> Contact: <strong class="text-white">{{ user.phone or profile.phone or session.phone or '+91 98765 43210' }}</strong></span>
+              <span><i class="fa-regular fa-envelope me-1"></i> {{ user.email or session.email }}</span>
+              <span><i class="fa-solid fa-location-dot me-1"></i> Location: <strong class="text-white">{{ location }}</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-light text-danger fw-bold shadow-sm">
+            <i class="fa-solid fa-hospital me-1"></i> Find Hospital / Donate Blood
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-navigation Bar -->
+    <div class="bg-white border-bottom px-4 py-2 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div class="nav nav-pills gap-1">
+        <a class="nav-link py-1 px-3 active bg-danger text-white rounded-pill fw-semibold" href="{{ url_for('donor.dashboard') }}">
+          <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('donor.find_hospital') }}">
+          <i class="fa-solid fa-magnifying-glass-location me-1"></i> Find Hospital / Donate Blood
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('donor.my_applications') }}">
+          <i class="fa-solid fa-file-lines me-1"></i> My Applications
+          {% if all_appointments %}
+          <span class="badge bg-secondary-subtle text-dark ms-1">{{ all_appointments|length }}</span>
+          {% endif %}
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('donor.my_appointments') }}">
+          <i class="fa-solid fa-calendar-check me-1"></i> My Appointments
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('donor.donation_history') }}">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i> Donation History
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('donor.profile') }}">
+          <i class="fa-solid fa-user me-1"></i> Profile
+        </a>
+      </div>
+      <div class="small text-muted d-none d-md-block">
+        <span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Account Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Total Donations</span>
+          <div class="rounded-circle bg-danger-subtle text-danger p-2"><i class="fa-solid fa-hand-holding-droplet"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-danger">{{ donation_count }}</h3>
+        <span class="small text-muted">Life-saving donations completed</span>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Active Requests</span>
+          <div class="rounded-circle bg-warning-subtle text-warning-emphasis p-2"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-warning-emphasis">{{ active_requests|length }}</h3>
+        <span class="small text-muted">Pending hospital confirmation</span>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Blood Group</span>
+          <div class="rounded-circle bg-info-subtle text-info p-2"><i class="fa-solid fa-heart-pulse"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-dark">{{ blood_group }}</h3>
+        <span class="small text-muted">Registered donor type</span>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Registered Location</span>
+          <div class="rounded-circle bg-success-subtle text-success p-2"><i class="fa-solid fa-location-crosshairs"></i></div>
+        </div>
+        <h5 class="fw-bold mb-1 text-dark text-truncate">{{ location }}</h5>
+        <span class="small text-muted">Primary donation zone</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Donation / Request Status Section -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="fa-solid fa-clipboard-check text-danger me-2"></i> Current Donation / Request Status
+          </h5>
+          <a href="{{ url_for('donor.my_applications') }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">View All Applications</a>
+        </div>
+        <div class="card-body px-4 pb-4">
+          {% if recent_status %}
+            <div class="p-3 rounded-4 border bg-light mb-3">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <span class="fw-bold text-dark fs-5">
+                  <i class="fa-solid fa-hospital text-danger me-2"></i> {{ recent_status.hospital_name }}
+                </span>
+                {% set st = recent_status.status|capitalize %}
+                {% if st == 'Confirmed' %}
+                  <span class="badge bg-success-subtle text-success fs-6 border border-success px-3 py-1">
+                    🟢 Confirmed
+                  </span>
+                {% elif st == 'Rejected' %}
+                  <span class="badge bg-danger-subtle text-danger fs-6 border border-danger px-3 py-1">
+                    🔴 Rejected
+                  </span>
+                {% elif st == 'Rescheduled' %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis fs-6 border border-warning px-3 py-1">
+                    🟡 Rescheduled
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-dark fs-6 border border-warning-subtle px-3 py-1">
+                    🟡 Pending Hospital Review
+                  </span>
+                {% endif %}
+              </div>
+
+              <div class="row g-2 text-muted small mt-2">
+                <div class="col-sm-6">
+                  <i class="fa-regular fa-calendar text-danger me-1"></i> Requested Date: 
+                  <strong class="text-dark">{{ recent_status.appointment_date or recent_status.slot_date }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <i class="fa-regular fa-clock text-danger me-1"></i> Preferred Time: 
+                  <strong class="text-dark">{{ recent_status.appointment_time or recent_status.slot_time }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <i class="fa-solid fa-droplet text-danger me-1"></i> Blood Group: 
+                  <strong class="text-dark">{{ recent_status.blood_group or recent_status.donor_blood_group }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <i class="fa-solid fa-tag text-secondary me-1"></i> Request ID: 
+                  <code>{{ recent_status.request_id or recent_status.booking_reference }}</code>
+                </div>
+              </div>
+
+              {% if recent_status.status|capitalize == 'Rescheduled' %}
+                <div class="alert alert-warning mt-3 mb-0 py-2 small d-flex align-items-center">
+                  <i class="fa-solid fa-clock-rotate-left me-2 fs-5"></i>
+                  <div>
+                    <strong>Hospital Action: Rescheduled</strong><br>
+                    New Scheduled Date: <strong>{{ recent_status.appointment_date or recent_status.slot_date }}</strong> &bull; Time: <strong>{{ recent_status.appointment_time or recent_status.slot_time }}</strong>
+                  </div>
+                </div>
+              {% elif recent_status.status|capitalize == 'Confirmed' %}
+                <div class="alert alert-success mt-3 mb-0 py-2 small d-flex align-items-center">
+                  <i class="fa-solid fa-circle-check me-2 fs-5"></i>
+                  <div>
+                    <strong>Confirmed by Blood Center Staff!</strong> Please arrive 15 minutes before your slot with a valid government photo ID.
+                  </div>
+                </div>
+              {% elif recent_status.status|capitalize == 'Rejected' %}
+                <div class="alert alert-danger mt-3 mb-0 py-2 small d-flex align-items-center">
+                  <i class="fa-solid fa-circle-xmark me-2 fs-5"></i>
+                  <div>
+                    <strong>Request Declined:</strong> {{ recent_status.cancellation_reason or 'Capacity reached or scheduling conflict' }}. You may choose another hospital or date.
+                  </div>
+                </div>
+              {% else %}
+                <div class="alert alert-light border mt-3 mb-0 py-2 small text-muted">
+                  <i class="fa-solid fa-hourglass-half text-warning me-1"></i> This donation request was sent directly to <strong>{{ recent_status.hospital_name }}</strong> and is awaiting hospital staff confirmation.
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="fa-solid fa-calendar-plus fs-2 text-danger opacity-50 mb-2"></i>
+              <p class="mb-2">No active blood donation requests at present.</p>
+              <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-rakt-primary btn-sm px-4">
+                <i class="fa-solid fa-heart me-1"></i> Find a Hospital to Donate
+              </a>
+            </div>
+          {% endif %}
+
+          <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+            <span class="small text-muted">Need to schedule a new donation?</span>
+            <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-rakt-outline btn-sm">
+              <i class="fa-solid fa-plus me-1"></i> New Donation Request
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation & Donation History Summary -->
+    <div class="col-lg-5">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="fa-solid fa-clock-rotate-left text-danger me-2"></i> Donation History
+          </h5>
+          <a href="{{ url_for('donor.donation_history') }}" class="small text-danger fw-semibold text-decoration-none">View All</a>
+        </div>
+        <div class="card-body px-4 pb-4">
+          {% if donations %}
+            <div class="d-flex flex-column gap-2">
+              {% for don in donations[:4] %}
+                <div class="p-2 px-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold text-dark small">{{ don.hospital_name }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">
+                      <i class="fa-regular fa-calendar me-1"></i> {{ don.donation_date }} &bull; {{ don.units_collected }} unit(s)
+                    </div>
+                  </div>
+                  <span class="badge bg-success-subtle text-success border border-success">Completed</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="fa-solid fa-droplet fs-3 text-secondary opacity-25 mb-2"></i>
+              <p class="small mb-0">No past donation records yet. Schedule your first voluntary donation today!</p>
+            </div>
+          {% endif %}
+
+          <!-- Step-by-Step Flow Guide -->
+          <div class="mt-4 pt-3 border-top">
+            <span class="small fw-bold text-dark mb-2 d-block"><i class="fa-solid fa-route text-danger me-1"></i> How It Works:</span>
+            <ol class="small text-muted ps-3 mb-0" style="line-height: 1.6;">
+              <li>Select your preferred accredited blood bank in <strong>Find Hospital</strong>.</li>
+              <li>Submit your donation appointment request with date & time.</li>
+              <li>Hospital reviews and confirms your appointment.</li>
+              <li>Visit the center, complete your donation, and save lives!</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Find Hospital / Donate Blood - Smart Blood Donation System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Header Banner -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fa-solid fa-hospital text-danger me-2"></i> Find Hospital / Donate Blood
+      </h3>
+      <p class="text-muted small mb-0">Select an accredited blood bank to schedule your voluntary blood donation</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('donor.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+      </a>
+      <a href="{{ url_for('donor.my_applications') }}" class="btn btn-rakt-outline btn-sm">
+        <i class="fa-solid fa-file-lines me-1"></i> My Applications
+      </a>
+    </div>
+  </div>
+
+  <!-- Instruction Notice -->
+  <div class="alert alert-light border border-danger-subtle bg-danger-subtle bg-opacity-25 rounded-3 d-flex align-items-center gap-3 mb-4 shadow-sm">
+    <div class="fs-4 text-danger"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="small">
+      <strong>Select a Hospital Below:</strong> When you select a specific hospital (e.g. <strong>ABC Hospital [H001]</strong>), your donation request will be securely connected specifically to that hospital's management dashboard.
+    </div>
+  </div>
+
+  <!-- Hospital Cards Grid -->
+  <div class="row g-4">
+    {% for item in hospitals %}
+      {% set h = item.hospital %}
+      {% set hid = item.hospital_id %}
+      <div class="col-md-6 col-lg-6">
+        <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 overflow-hidden hover-shadow transition">
+          <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <span class="badge bg-danger-subtle text-danger fw-bold border border-danger-subtle mb-2 px-2 py-1">
+                  Hospital ID: {{ hid }}
+                </span>
+                <h4 class="fw-bold text-dark mb-1 fs-5">{{ item.name }}</h4>
+                <div class="text-muted small">
+                  <i class="fa-solid fa-location-dot text-danger me-1"></i> 
+                  Location: <strong class="text-dark">{{ item.location }}</strong>
+                </div>
+              </div>
+              <span class="badge bg-success-subtle text-success border border-success px-2 py-1 small">
+                <i class="fa-solid fa-circle-check me-1"></i> Verified
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body px-4 py-2">
+            <!-- Details -->
+            <div class="small text-muted mb-3">
+              <div><i class="fa-solid fa-phone me-1 text-secondary"></i> Contact: <strong>{{ item.phone }}</strong></div>
+              <div><i class="fa-solid fa-clock me-1 text-secondary"></i> Operating Hours: {{ item.operating_hours }}</div>
+            </div>
+
+            <!-- Available Blood Groups & Stock Status -->
+            <div class="border-top pt-3 mb-3">
+              <span class="small fw-bold text-dark d-block mb-2">
+                <i class="fa-solid fa-droplet text-danger me-1"></i> Blood Stock Status & Available Groups:
+              </span>
+              <div class="d-flex flex-wrap gap-1">
+                {% for s in item.stocks %}
+                  {% set st = s.status %}
+                  {% if st == 'Normal' %}
+                    <span class="badge bg-success-subtle text-success border border-success py-1 px-2" style="font-size: 0.75rem;" title="{{ s.blood_group }}: {{ s.available_units }} units (Normal)">
+                      🟢 {{ s.blood_group }}: {{ s.available_units }}u
+                    </span>
+                  {% elif st == 'Low' %}
+                    <span class="badge bg-warning-subtle text-dark border border-warning py-1 px-2" style="font-size: 0.75rem;" title="{{ s.blood_group }}: {{ s.available_units }} units (Low)">
+                      🟡 {{ s.blood_group }}: {{ s.available_units }}u
+                    </span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger py-1 px-2" style="font-size: 0.75rem;" title="{{ s.blood_group }}: {{ s.available_units }} units (Critical)">
+                      🔴 {{ s.blood_group }}: {{ s.available_units }}u
+                    </span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Footer Action -->
+          <div class="card-footer bg-light border-0 px-4 py-3 d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Ready to donate?</span>
+            <a href="{{ url_for('donor.donate_blood', hospital_id=hid) }}" class="btn btn-rakt-primary px-3 py-2 fw-semibold shadow-sm">
+              <i class="fa-solid fa-heart me-1"></i> Donate Blood to {{ hid }}
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Register Hospital / Blood Bank - Smart Blood Bank Network{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-rakt shadow-lg border-0 rounded-4">
+        <div class="card-rakt-header border-0 pb-0 pt-4 px-4 text-center flex-column">
+          <div class="brand-icon-wrapper mx-auto mb-2" style="width: 48px; height: 48px; font-size: 1.25rem; background: linear-gradient(135deg, #0284C7, #0369A1);">
+            <i class="fa-solid fa-hospital"></i>
+          </div>
+          <h3 class="fs-4 fw-bold">Hospital & Blood Bank Registration</h3>
+          <p class="text-muted small">Register your facility into India's blood banking and transfusion grid.</p>
+        </div>
+
+        <div class="card-rakt-body p-4">
+          <div class="alert alert-info small d-flex align-items-center mb-4">
+            <i class="fa-solid fa-circle-info fs-5 me-2"></i>
+            <div>
+              <strong>Administrative Verification Required:</strong> Newly registered centers require credential approval by health platform administrators before stock updates become live to the public.
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('auth.register_hospital') }}">
+            <h5 class="fs-6 fw-bold text-primary border-bottom pb-2 mb-3">1. Institution Credentials</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-7">
+                <label class="form-label">Hospital / Blood Bank Legal Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="hospital_name" value="{{ form_data.hospital_name or '' }}" placeholder="Registered facility name" required>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Drug Controller License / Reg No. <span class="text-danger">*</span></label>
+                <input type="text" class="form-control text-uppercase" name="license_number" value="{{ form_data.license_number or '' }}" placeholder="e.g. DL-BB-2024-9901" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Facility Category</label>
+                <select name="facility_type" class="form-select">
+                  <option value="Government" {% if form_data.facility_type == 'Government' %}selected{% endif %}>Government Hospital</option>
+                  <option value="Private" {% if form_data.facility_type == 'Private' %}selected{% endif %}>Private / Multi-Specialty</option>
+                  <option value="Red Cross" {% if form_data.facility_type == 'Red Cross' %}selected{% endif %}>Red Cross Society</option>
+                  <option value="Charitable" {% if form_data.facility_type == 'Charitable' %}selected{% endif %}>Charitable Trust Blood Bank</option>
+                  <option value="Autonomous" {% if form_data.facility_type == 'Autonomous' %}selected{% endif %}>Autonomous Apex Institute</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Operating Schedule</label>
+                <input type="text" class="form-control" name="operating_hours" value="{{ form_data.operating_hours or '24/7' }}" placeholder="e.g. 24/7 or 08:00 AM - 08:00 PM">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Daily Capacity Per Slot</label>
+                <input type="number" class="form-control" name="daily_capacity" value="{{ form_data.daily_capacity or 4 }}" min="1" max="25">
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-primary border-bottom pb-2 mb-3">2. Facility Location in India</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">State / UT <span class="text-danger">*</span></label>
+                <select name="state" class="form-select state-selector" data-district-target="hosp_district" required>
+                  <option value="">-- Select State --</option>
+                  {% for st in locations.keys() %}
+                    <option value="{{ st }}" {% if form_data.state == st %}selected{% endif %}>{{ st }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">District / City <span class="text-danger">*</span></label>
+                <select name="district" id="hosp_district" class="form-select" required>
+                  <option value="">-- Select District --</option>
+                  {% if form_data.district %}
+                    <option value="{{ form_data.district }}" selected>{{ form_data.district }}</option>
+                  {% endif %}
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Detailed Physical Address <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="address" value="{{ form_data.address or '' }}" placeholder="Street, landmark, campus building and pincode" required>
+              </div>
+            </div>
+
+            <h5 class="fs-6 fw-bold text-primary border-bottom pb-2 mb-3">3. Authorized Medical Officer & Access</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Authorized Contact Person / In-Charge <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="contact_person" value="{{ form_data.contact_person or '' }}" placeholder="Name of Medical Officer / In-Charge" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Official Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" name="email" value="{{ form_data.email or '' }}" placeholder="official-email@hospital.org" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Official Desk Phone <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" name="phone" value="{{ form_data.phone or '' }}" placeholder="Hospital desk phone number" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">24x7 Emergency Blood Line <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" name="emergency_phone" value="{{ form_data.emergency_phone or '' }}" placeholder="Emergency blood helpline number" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Staff Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="password" minlength="6" placeholder="At least 6 characters" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" name="confirm_password" minlength="6" placeholder="Re-enter password" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fs-6" style="background: linear-gradient(135deg, #0284C7, #0369A1); border: none;">
+              <i class="fa-solid fa-hospital-user me-2"></i> Submit Hospital Registration
+            </button>
+          </form>
+
+          <div class="text-center small text-muted mt-3">
+            Already registered? <a href="{{ url_for('auth.login') }}" class="text-primary fw-semibold">Sign in here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

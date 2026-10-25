@@ -1,0 +1,46 @@
+# Environments & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# Pytest & Testing Cache
+pytest-cache-files-*/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & Temporary Files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+mingit.zip
+
+# OS Specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# IDE & Editor Specific
+.vscode/
+.idea/
+*.suo
+*.user

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart Blood Donation and Blood Bank Management System for India. Connecting voluntary donors, authorized blood banks, and patients in need with real-time stock and appointment scheduling.">
+  <title>{% block title %}Smart Blood Bank Management System (India){% endblock %}</title>
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Custom Healthcare Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Demo Mode / Environment Status Banner -->
+  {% if is_demo_mode %}
+  <div class="demo-banner d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <span class="badge bg-warning text-dark me-2"><i class="fa-solid fa-flask"></i> Interactive Demo Mode</span>
+      <span class="small">{{ demo_mode_reason }}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-light py-0 px-2" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#demoAccountsModal">
+        <i class="fa-solid fa-key me-1"></i> Demo Credentials
+      </button>
+      <span class="badge bg-secondary" style="font-size: 0.72rem;">Mongo: PyMongo Fallback Active</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="demo-banner d-flex align-items-center justify-content-between flex-wrap py-1">
+    <div class="small text-white-50">
+      <span class="badge bg-success me-2"><i class="fa-solid fa-database"></i> Live Atlas Connected</span>
+      <span>Storage: {{ db_connection_str }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Emergency & Academic Helpline Ticker -->
+  <div class="emergency-ticker d-flex align-items-center justify-content-between flex-wrap">
+    <div class="d-flex align-items-center gap-3">
+      <span><i class="fa-solid fa-heart-pulse text-danger me-1"></i> <strong>National Blood Helpline:</strong> Call <strong>1910</strong> or <strong>104</strong> (24x7 India)</span>
+      <span class="d-none d-md-inline text-muted">|</span>
+      <span class="d-none d-md-inline"><i class="fa-solid fa-shield-halved text-primary me-1"></i> Voluntary Blood Donation Saves Lives</span>
+    </div>
+    <div class="small text-danger-emphasis">
+      <i class="fa-solid fa-graduation-cap me-1"></i> Academic Prototype Demonstration
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('public.index') }}">
+        <div class="brand-icon-wrapper">
+          <i class="fa-solid fa-droplet"></i>
+        </div>
+        <div>
+          <span>Smart<span class="text-dark">Rakt</span></span>
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size: 0.65rem; vertical-align: middle;">INDIA</span>
+        </div>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          {% if current_user and current_user.role == 'donor' %}
+            <!-- SECTION 2: DONOR NAVIGATION -->
+            <li class="nav-item">
+              <a class="nav-link {% if request.path == '/donor/dashboard' %}active{% endif %}" href="{{ url_for('donor.dashboard') }}">
+                <i class="fa-solid fa-gauge-high text-danger me-1"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'find-hospital' in request.path or 'donate' in request.path %}active{% endif %}" href="{{ url_for('donor.find_hospital') }}">
+                <i class="fa-solid fa-hospital text-danger me-1"></i> Find Hospital / Donate Blood
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'applications' in request.path %}active{% endif %}" href="{{ url_for('donor.my_applications') }}">
+                <i class="fa-solid fa-file-waveform text-danger me-1"></i> My Applications
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'appointments' in request.path %}active{% endif %}" href="{{ url_for('donor.my_appointments') }}">
+                <i class="fa-solid fa-calendar-check text-danger me-1"></i> My Appointments
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'history' in request.path %}active{% endif %}" href="{{ url_for('donor.donation_history') }}">
+                <i class="fa-solid fa-clock-rotate-left text-danger me-1"></i> Donation History
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'profile' in request.path %}active{% endif %}" href="{{ url_for('donor.profile') }}">
+                <i class="fa-solid fa-user text-secondary me-1"></i> Profile
+              </a>
+            </li>
+          {% elif current_user and current_user.role == 'hospital' %}
+            <!-- SECTION 6: HOSPITAL MANAGEMENT NAVIGATION -->
+            <li class="nav-item">
+              <a class="nav-link {% if request.path == '/hospital/dashboard' %}active{% endif %}" href="{{ url_for('hospital.dashboard') }}">
+                <i class="fa-solid fa-chart-line text-primary me-1"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'stock' in request.path %}active{% endif %}" href="{{ url_for('hospital.stock_management') }}">
+                <i class="fa-solid fa-boxes-stacked text-primary me-1"></i> Blood Stock
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'donors' in request.path %}active{% endif %}" href="{{ url_for('hospital.donors') }}">
+                <i class="fa-solid fa-users text-primary me-1"></i> Donors
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'blood-requests' in request.path %}active{% endif %}" href="{{ url_for('hospital.blood_requests') }}">
+                <i class="fa-solid fa-truck-medical text-primary me-1"></i> Blood Requests
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'appointments' in request.path or 'requests' in request.path %}active{% endif %}" href="{{ url_for('hospital.appointments') }}">
+                <i class="fa-regular fa-calendar-check text-primary me-1"></i> Appointments / Donation Requests
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'donations' in request.path %}active{% endif %}" href="{{ url_for('hospital.donation_history') }}">
+                <i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Donation History
+              </a>
+            </li>
+          {% else %}
+            <!-- PUBLIC NAVIGATION (Not logged in) -->
+            <li class="nav-item">
+              <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('public.index') }}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'find-blood' in request.path %}active{% endif %}" href="{{ url_for('public.find_blood') }}">
+                <i class="fa-solid fa-magnifying-glass me-1"></i> Find Blood
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'request-blood' in request.path %}active{% endif %}" href="{{ url_for('public.request_blood') }}">
+                <i class="fa-solid fa-hand-holding-medical text-danger me-1"></i> Request Blood
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'track-request' in request.path %}active{% endif %}" href="{{ url_for('public.track_request') }}">Track Request</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if 'faq' in request.path %}active{% endif %}" href="{{ url_for('public.faq') }}">Guidelines</a>
+            </li>
+          {% endif %}
+        </ul>
+
+        <div class="d-flex align-items-center gap-2">
+          {% if current_user %}
+            <!-- Role Badge & User Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {% if current_user.role == 'hospital' %}
+                  <span class="badge bg-primary font-monospace">{{ current_user.hospital_id or 'H001' }}</span>
+                  <span class="fw-semibold small text-truncate" style="max-width: 160px;">{{ current_user.hospital_name or current_user.name }}</span>
+                {% elif current_user.role == 'donor' %}
+                  <span class="badge bg-danger font-monospace">{{ current_user.donor_id or 'D001' }}</span>
+                  <span class="badge bg-dark">{{ current_user.blood_group }}</span>
+                  <span class="fw-semibold small text-truncate" style="max-width: 140px;">{{ current_user.name }}</span>
+                {% else %}
+                  <span class="badge bg-dark">Admin</span>
+                  <span class="fw-semibold small text-truncate" style="max-width: 140px;">{{ current_user.name }}</span>
+                {% endif %}
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2">
+                {% if current_user.role == 'donor' %}
+                  <li class="dropdown-header text-uppercase small fw-bold">Donor Portal ({{ current_user.donor_id or 'D001' }})</li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('donor.dashboard') }}"><i class="fa-solid fa-gauge-high text-danger me-2"></i> Dashboard</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('donor.find_hospital') }}"><i class="fa-solid fa-hospital text-danger me-2"></i> Find Hospital / Donate Blood</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('donor.my_applications') }}"><i class="fa-solid fa-file-waveform text-danger me-2"></i> My Applications</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('donor.my_appointments') }}"><i class="fa-solid fa-calendar-check text-danger me-2"></i> My Appointments</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('donor.donation_history') }}"><i class="fa-solid fa-clock-rotate-left text-danger me-2"></i> Donation History</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('donor.profile') }}"><i class="fa-solid fa-user-pen text-secondary me-2"></i> Profile</a></li>
+                {% elif current_user.role == 'hospital' %}
+                  <li class="dropdown-header text-uppercase small fw-bold">Hospital Portal ({{ current_user.hospital_id or 'H001' }})</li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('hospital.dashboard') }}"><i class="fa-solid fa-chart-line text-primary me-2"></i> Hospital Dashboard</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('hospital.stock_management') }}"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i> Blood Stock</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('hospital.donors') }}"><i class="fa-solid fa-users text-primary me-2"></i> Donors</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('hospital.blood_requests') }}"><i class="fa-solid fa-truck-medical text-primary me-2"></i> Blood Requests</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('hospital.appointments') }}"><i class="fa-solid fa-calendar-check text-primary me-2"></i> Appointments / Donation Requests</a></li>
+                  <li><a class="dropdown-item py-2" href="{{ url_for('hospital.donation_history') }}"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Donation History</a></li>
+                {% elif current_user.role == 'admin' %}
+                  <li><a class="dropdown-item py-2" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-shield-halved text-dark me-2"></i> Administration Console</a></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket me-2"></i> Sign Out</a></li>
+              </ul>
+            </div>
+          {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-rakt-outline btn-sm px-3">Sign In</a>
+            <div class="dropdown">
+              <button class="btn btn-rakt-primary btn-sm px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Register
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                <li><a class="dropdown-item py-2" href="{{ url_for('auth.register_donor') }}"><i class="fa-solid fa-heart text-danger me-2"></i> Register as Voluntary Donor</a></li>
+                <li><a class="dropdown-item py-2" href="{{ url_for('auth.register_hospital') }}"><i class="fa-solid fa-hospital text-primary me-2"></i> Register Hospital / Blood Bank</a></li>
+              </ul>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-custom alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+            <div class="d-flex align-items-center">
+              {% if category == 'success' %}
+                <i class="fa-solid fa-circle-check fs-5 me-2 text-success"></i>
+              {% elif category == 'danger' %}
+                <i class="fa-solid fa-circle-exclamation fs-5 me-2 text-danger"></i>
+              {% elif category == 'warning' %}
+                <i class="fa-solid fa-triangle-exclamation fs-5 me-2 text-warning"></i>
+              {% else %}
+                <i class="fa-solid fa-circle-info fs-5 me-2 text-info"></i>
+              {% endif %}
+              <div>{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main View Content -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Medical Disclaimer Callout in Container -->
+  <div class="container my-4 no-print">
+    <div class="medical-disclaimer-box d-flex align-items-start gap-3">
+      <i class="fa-solid fa-stethoscope fs-4 text-warning-emphasis mt-1"></i>
+      <div>
+        <strong>Ethical & Medical Clearance Protocol:</strong>
+        <p class="mb-0 mt-1 small">
+          This system is an academic software demonstration for India. Blood group match predictions or automatic scheduling calculations do <em>not</em> constitute medical clearance. All donor health screening, hemoglobin evaluation (Hb &ge; 12.5 g/dL), weight verification (&ge; 45kg), cross-matching, and transfusion decisions must be executed on-site by certified transfusion medicine physicians in accordance with the National Blood Transfusion Council (NBTC) regulations.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer-rakt no-print">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="brand-icon-wrapper" style="width: 32px; height: 32px; font-size: 0.9rem;">
+              <i class="fa-solid fa-droplet"></i>
+            </div>
+            <h5 class="mb-0 text-white brand-font">Smart Blood Bank (India)</h5>
+          </div>
+          <p class="small text-muted mb-3">
+            An advanced digital blood transfusion and inventory management system designed to connect donors, hospitals, and patients seamlessly across Indian states and districts.
+          </p>
+          <div class="d-flex gap-3 text-white-50">
+            <span><i class="fa-solid fa-shield-heart text-danger"></i> NBTC Aligned</span>
+            <span><i class="fa-solid fa-lock text-success"></i> Secure Role Access</span>
+            <span><i class="fa-solid fa-bolt text-warning"></i> Real-Time Slots</span>
+          </div>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h5>Services</h5>
+          <a href="{{ url_for('public.find_blood') }}">Find Blood Units</a>
+          <a href="{{ url_for('public.request_blood') }}">Emergency Request</a>
+          <a href="{{ url_for('public.track_request') }}">Track Request Status</a>
+          <a href="{{ url_for('auth.register_donor') }}">Register as Donor</a>
+          <a href="{{ url_for('auth.register_hospital') }}">Hospital Portal</a>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h5>Guidelines</h5>
+          <a href="{{ url_for('public.about') }}">How Donation Works</a>
+          <a href="{{ url_for('public.about') }}#compatibility">Compatibility Chart</a>
+          <a href="{{ url_for('public.faq') }}">Eligibility Criteria</a>
+          <a href="{{ url_for('public.faq') }}#myths">Facts & Myths</a>
+          <a href="{{ url_for('public.contact') }}">Contact & Help</a>
+        </div>
+
+        <div class="col-lg-4">
+          <h5>Emergency Hotlines (India)</h5>
+          <div class="card bg-dark border-secondary p-3 mb-3 text-white small">
+            <div class="d-flex justify-content-between mb-1">
+              <span>National Blood Helpline:</span>
+              <strong class="text-danger">1910</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span>National Health Helpline:</span>
+              <strong class="text-warning">104</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Medical Emergency Ambulance:</span>
+              <strong class="text-info">108 / 112</strong>
+            </div>
+          </div>
+          <p class="small text-muted mb-0">
+            For critical medical dispatch in life-threatening scenarios, immediately dial 108 or contact the emergency department of the nearest tertiary care hospital.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center text-muted">
+        <div>&copy; 2026 Smart Blood Bank Management System. Built for Indian Healthcare Demonstration.</div>
+        <div class="mt-2 mt-md-0">
+          <span class="me-3">Academic Prototype</span>
+          <a href="{{ url_for('public.contact') }}" class="d-inline text-muted text-decoration-underline">Feedback</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Demo Accounts Modal for Evaluators -->
+  <div class="modal fade" id="demoAccountsModal" tabindex="-1" aria-labelledby="demoAccountsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-light border-0">
+          <h5 class="modal-title fs-6 fw-bold" id="demoAccountsModalLabel">
+            <i class="fa-solid fa-key text-danger me-2"></i> Quick Demo Test Credentials
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-3">
+            Click any demo profile to quickly test the application without manual typing.
+          </p>
+          <div class="list-group gap-2">
+            <a href="{{ url_for('auth.login', demo_user='admin') }}" class="list-group-item list-group-item-action rounded-3 border p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-dark">Administrator</span>
+                <span class="small text-muted">admin@raktkosh.gov.in</span>
+              </div>
+              <div class="fw-bold mt-1 text-dark">Dr. Vinod Paul (Central Health Authority)</div>
+              <div class="small text-muted">Verify hospitals, review emergency requests, monitor audit logs.</div>
+            </a>
+
+            <a href="{{ url_for('auth.login', demo_user='hospital') }}" class="list-group-item list-group-item-action rounded-3 border p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-primary">Hospital Staff</span>
+                <span class="small text-muted">aiims.bloodbank@delhi.gov.in</span>
+              </div>
+              <div class="fw-bold mt-1 text-dark">AIIMS Central Blood Bank (New Delhi)</div>
+              <div class="small text-muted">Manage 8 blood groups stock, confirm appointments, record attendance.</div>
+            </a>
+
+            <a href="{{ url_for('auth.login', demo_user='donor') }}" class="list-group-item list-group-item-action rounded-3 border p-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-danger">Voluntary Donor (O+)</span>
+                <span class="small text-muted">rahul.sharma@gmail.com</span>
+              </div>
+              <div class="fw-bold mt-1 text-dark">Rahul Sharma (Verified Donor)</div>
+              <div class="small text-muted">Book donation slots, view appointment slips, reschedule/cancel.</div>
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5.3 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Main UI Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

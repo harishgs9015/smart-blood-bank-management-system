@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Donation History & Record Blood Collection - {{ hospital.name }} ({{ hospital_id }}){% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge bg-primary px-3 py-1 font-monospace fs-6">Hospital ID: {{ hospital_id }}</span>
+        <span class="badge bg-light text-dark border"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ hospital.location or hospital.city or 'Chennai' }}</span>
+        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fa-solid fa-boxes-packing me-1"></i> Stock Auto-Sync Active</span>
+      </div>
+      <h2 class="fs-3 fw-bold mb-0 text-dark">Donation History & Blood Collection</h2>
+      <p class="text-muted small mb-0">Record completed voluntary donations. Automatically increments your blood inventory and updates donor records.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('hospital.stock_management') }}" class="btn btn-outline-danger">
+        <i class="fa-solid fa-boxes-stacked me-1"></i> Blood Stock
+      </a>
+      <a href="{{ url_for('hospital.appointments') }}" class="btn btn-outline-primary">
+        <i class="fa-regular fa-calendar-check me-1"></i> Appointments
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Section 14: RECORD DONATION FORM -->
+    <div class="col-lg-5">
+      <div class="card card-rakt shadow-sm">
+        <div class="card-rakt-header bg-danger text-white">
+          <h5 class="fs-6 fw-bold mb-0">
+            <i class="fa-solid fa-syringe me-2"></i> Record Successful Donation
+          </h5>
+        </div>
+        <div class="card-rakt-body p-4">
+          <form method="POST" action="{{ url_for('hospital.donation_history') }}">
+            <!-- Optional Quick Selection from Confirmed Appointments -->
+            {% if confirmed_appts %}
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">Quick-Fill from Scheduled Appointment</label>
+              <select class="form-select form-select-sm" id="appointmentQuickSelect">
+                <option value="">-- Or enter donor details manually below --</option>
+                {% for appt in confirmed_appts %}
+                  <option value="{{ appt._id }}" 
+                          data-donor-id="{{ appt.donor_id or 'D001' }}" 
+                          data-donor-name="{{ appt.donor_name }}" 
+                          data-blood-group="{{ appt.blood_group or appt.donor_blood_group }}" 
+                          data-date="{{ appt.appointment_date or appt.slot_date }}">
+                    {{ appt.donor_name }} ({{ appt.donor_id or 'D001' }}) - {{ appt.blood_group or appt.donor_blood_group }} [{{ appt.appointment_date or appt.slot_date }}]
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+
+            <input type="hidden" name="appointment_id" id="hiddenAppointmentId" value="{{ request.args.get('appointment_id', '') }}">
+
+            <!-- Donor ID / Identifier -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Donor ID / Identifier <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="fa-solid fa-id-badge text-secondary"></i></span>
+                <input type="text" class="form-control" name="donor_id" id="donorIdInput" 
+                       value="{{ request.args.get('donor_id', '') }}" 
+                       placeholder="e.g. D001, D002, or Donor Name" required>
+              </div>
+              <div class="form-text small">Links this donation specifically to the donor's profile.</div>
+            </div>
+
+            <!-- Blood Group -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Blood Group Collected <span class="text-danger">*</span></label>
+              <select name="blood_group" id="bloodGroupSelect" class="form-select" required>
+                <option value="">-- Select Blood Group --</option>
+                {% for bg in blood_groups %}
+                  <option value="{{ bg }}" {% if bg == 'O+' %}selected{% endif %}>{{ bg }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Donation Date -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Donation Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" name="donation_date" id="donationDateInput" required>
+            </div>
+
+            <!-- Units Collected -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Units Collected <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" class="form-control" name="units_collected" min="1" max="10" value="1" required>
+                <span class="input-group-text bg-light">Unit(s) [Whole Blood]</span>
+              </div>
+              <div class="form-text small">Each unit collected increases your hospital's blood stock by this amount.</div>
+            </div>
+
+            <!-- Details -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Collection Details / Notes</label>
+              <textarea class="form-control" name="details" rows="2" placeholder="e.g. 450ml Whole Blood bag collected in good condition. Donor tolerated well."></textarea>
+            </div>
+
+            <!-- Callout: Section 14 four effects -->
+            <div class="alert alert-success small mb-3 py-2 px-3 border border-success-subtle">
+              <div class="fw-bold mb-1"><i class="fa-solid fa-circle-check text-success me-1"></i> When Saved:</div>
+              <ol class="mb-0 ps-3">
+                <li>Donation is added to Donation History below.</li>
+                <li>Hospital blood stock for the blood group increases.</li>
+                <li>Donor's donation history count updates automatically.</li>
+                <li>Record remains linked to donor and {{ hospital_id }}.</li>
+              </ol>
+            </div>
+
+            <button type="submit" class="btn btn-danger w-100 fw-semibold py-2">
+              <i class="fa-solid fa-save me-1"></i> Save Donation & Increment Stock
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 14: SCROLLABLE DONATION HISTORY TABLE -->
+    <div class="col-lg-7">
+      <div class="card card-rakt shadow-sm">
+        <div class="card-rakt-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fs-6 fw-bold mb-0">
+              <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Hospital Donation History
+            </h5>
+            <div class="small text-muted">{{ hospital.name }} ({{ hospital_id }})</div>
+          </div>
+          <span class="badge bg-secondary font-monospace">{{ donations|length }} Total Collections</span>
+        </div>
+        <div class="card-rakt-body p-0">
+          {% if donations %}
+            <div class="table-responsive" style="max-height: 560px; overflow-y: auto;">
+              <table class="table table-rakt align-middle mb-0">
+                <thead class="sticky-top bg-light">
+                  <tr>
+                    <th>Donation Ref</th>
+                    <th>Donor ID & Name</th>
+                    <th>Blood Group</th>
+                    <th>Date</th>
+                    <th>Units</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for don in donations %}
+                  <tr>
+                    <td>
+                      <span class="badge bg-light text-dark border font-monospace fs-6 px-2 py-1">
+                        {{ don.donation_id or ('DON-' ~ don._id|string|slice(-4)) }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="fw-bold text-dark">{{ don.donor_name or 'Voluntary Donor' }}</div>
+                      <span class="badge bg-dark font-monospace" style="font-size: 0.72rem;">
+                        <i class="fa-solid fa-id-badge me-1 text-secondary"></i>{{ don.donor_id or 'D001' }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if 'bombay' in don.blood_group|lower or 'hh' in don.blood_group|lower %}
+                        <span class="badge bg-warning text-dark border border-warning fw-bold">Bombay (hh)</span>
+                      {% elif '+' in don.blood_group %}
+                        <span class="badge bg-danger fw-bold">{{ don.blood_group }}</span>
+                      {% else %}
+                        <span class="badge bg-dark fw-bold">{{ don.blood_group }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="fw-semibold text-dark small">
+                        <i class="fa-regular fa-calendar-check text-success me-1"></i> {{ don.donation_date }}
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold fs-6">
+                        +{{ don.units_collected or 1 }} u
+                      </span>
+                    </td>
+                    <td>
+                      <div class="small text-muted text-truncate" style="max-width: 180px;" title="{{ don.details or 'Standard whole blood donation' }}">
+                        {{ don.details or 'Standard whole blood donation' }}
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="fa-solid fa-hand-holding-droplet fs-2 text-muted mb-2"></i>
+              <h5 class="fs-6 fw-bold">No Donations Recorded Yet</h5>
+              <p class="small text-muted mb-0">Use the form on the left to record completed donations. Blood stock and donor history will automatically update.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Set default donation date to today
+  const dateInput = document.getElementById('donationDateInput');
+  if (dateInput && !dateInput.value) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+  }
+
+  // Quick fill from scheduled appointments
+  const apptSelect = document.getElementById('appointmentQuickSelect');
+  const donorInput = document.getElementById('donorIdInput');
+  const bgSelect = document.getElementById('bloodGroupSelect');
+  const hiddenApptId = document.getElementById('hiddenAppointmentId');
+
+  if (apptSelect) {
+    apptSelect.addEventListener('change', function() {
+      const opt = apptSelect.options[apptSelect.selectedIndex];
+      if (opt && opt.value) {
+        if (donorInput) donorInput.value = opt.getAttribute('data-donor-id') || '';
+        if (bgSelect) bgSelect.value = opt.getAttribute('data-blood-group') || '';
+        if (hiddenApptId) hiddenApptId.value = opt.value;
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

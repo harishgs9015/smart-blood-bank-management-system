@@ -1,0 +1,526 @@
+/* ==========================================================================
+   Smart Blood Donation & Blood Bank Management System (India)
+   Design System & Custom Healthcare Styling
+   ========================================================================== */
+
+:root {
+  --primary-red: #B71C1C;
+  --primary-red-hover: #8E0000;
+  --secondary-red: #C62828;
+  --crimson-light: #FFEBEE;
+  --crimson-border: #FFCDD2;
+  --accent-rose: #E53935;
+  --accent-soft: #FFF5F5;
+  
+  --dark-slate: #0F172A;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --bg-page: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  
+  --success-green: #10B981;
+  --success-soft: #ECFDF5;
+  --warning-amber: #F59E0B;
+  --warning-soft: #FFFBEB;
+  --danger-red: #EF4444;
+  --danger-soft: #FEF2F2;
+  --info-blue: #0284C7;
+  --info-soft: #F0F9FF;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 25px -5px rgba(183, 28, 28, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 20px 30px -10px rgba(183, 28, 28, 0.15);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  color: var(--dark-slate);
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   Top Alert Bar (Demo Mode & Emergency Callout)
+   ========================================================================== */
+.demo-banner {
+  background: linear-gradient(90deg, #1E293B 0%, #334155 100%);
+  color: #F8FAFC;
+  font-size: 0.85rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 2px solid #E2E8F0;
+}
+
+.demo-banner .badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.demo-banner a {
+  color: #38BDF8;
+  text-decoration: underline;
+}
+
+.emergency-ticker {
+  background: #FFF1F2;
+  border-bottom: 1px solid #FFE4E6;
+  color: #9F1239;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 1rem;
+}
+
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+.navbar-custom {
+  background-color: var(--bg-surface);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary-red) !important;
+}
+
+.brand-icon-wrapper {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--accent-rose), var(--primary-red));
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(183, 28, 28, 0.25);
+}
+
+.nav-link {
+  font-weight: 500;
+  color: var(--text-secondary) !important;
+  padding: 0.5rem 0.85rem !important;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--primary-red) !important;
+  background-color: var(--crimson-light);
+}
+
+/* ==========================================================================
+   Buttons & Badges
+   ========================================================================== */
+.btn-rakt-primary {
+  background: linear-gradient(135deg, var(--primary-red) 0%, var(--secondary-red) 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(183, 28, 28, 0.22);
+  transition: var(--transition);
+}
+
+.btn-rakt-primary:hover, .btn-rakt-primary:focus {
+  background: linear-gradient(135deg, var(--secondary-red) 0%, var(--primary-red-hover) 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(183, 28, 28, 0.35);
+}
+
+.btn-rakt-outline {
+  background: transparent;
+  color: var(--primary-red);
+  border: 1.5px solid var(--primary-red);
+  font-weight: 600;
+  padding: 0.55rem 1.3rem;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+
+.btn-rakt-outline:hover {
+  background-color: var(--primary-red);
+  color: white;
+  box-shadow: 0 4px 12px rgba(183, 28, 28, 0.2);
+}
+
+.badge-blood-group {
+  background: linear-gradient(135deg, #B71C1C, #D32F2F);
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(183, 28, 28, 0.2);
+}
+
+/* Status Badges */
+.badge-stock-available {
+  background-color: var(--success-soft);
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+}
+
+.badge-stock-low {
+  background-color: var(--warning-soft);
+  color: #B45309;
+  border: 1px solid #FDE68A;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+}
+
+.badge-stock-critical {
+  background-color: var(--danger-soft);
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  animation: pulse-critical 2s infinite ease-in-out;
+}
+
+@keyframes pulse-critical {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+  100% { transform: scale(1); }
+}
+
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+.hero-wrapper {
+  background: radial-gradient(120% 80% at 90% 10%, #FFEBEF 0%, #FFFFFF 60%, #F8FAFC 100%);
+  padding: 4.5rem 0 3.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FFF0F2;
+  border: 1px solid #FECDD3;
+  color: #BE123C;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.hero-title {
+  font-size: 3.25rem;
+  line-height: 1.15;
+  color: var(--dark-slate);
+  margin-bottom: 1.25rem;
+}
+
+.hero-highlight {
+  background: linear-gradient(135deg, #B71C1C 0%, #E11D48 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-stats-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--primary-red);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 0.35rem;
+}
+
+/* ==========================================================================
+   Cards & Layout Components
+   ========================================================================== */
+.card-rakt {
+  background: var(--bg-surface);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.card-rakt:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(183, 28, 28, 0.2);
+}
+
+.card-rakt-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-rakt-body {
+  padding: 1.5rem;
+}
+
+/* Quick Search Card */
+.search-widget {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.75rem;
+  margin-top: -2rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Form Styling */
+.form-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.form-control, .form-select {
+  border: 1.5px solid #E2E8F0;
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.95rem;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent-rose);
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.15);
+}
+
+/* ==========================================================================
+   Booking Stepper Component
+   ========================================================================== */
+.booking-step-indicator {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.step-item {
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #E2E8F0;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  margin: 0 auto 0.5rem auto;
+  transition: var(--transition);
+}
+
+.step-item.active .step-circle {
+  background: var(--primary-red);
+  color: white;
+  box-shadow: 0 4px 12px rgba(183, 28, 28, 0.35);
+}
+
+.step-item.completed .step-circle {
+  background: var(--success-green);
+  color: white;
+}
+
+.step-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.step-item.active .step-title {
+  color: var(--primary-red);
+}
+
+/* Slot selection pill */
+.slot-pill-btn {
+  border: 1.5px solid #E2E8F0;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: white;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.slot-pill-btn:hover:not(.disabled) {
+  border-color: var(--accent-rose);
+  background-color: var(--accent-soft);
+}
+
+.slot-pill-btn.selected {
+  border-color: var(--primary-red);
+  background: #FFF1F2;
+  box-shadow: 0 0 0 2px var(--primary-red);
+}
+
+.slot-pill-btn.disabled {
+  opacity: 0.55;
+  background: #F1F5F9;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Table & Lists
+   ========================================================================== */
+.table-rakt {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.table-rakt th {
+  background-color: #F8FAFC;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.table-rakt td {
+  padding: 1rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 0.92rem;
+}
+
+.table-rakt tbody tr:hover {
+  background-color: #F8FAFC;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.footer-rakt {
+  background-color: var(--dark-slate);
+  color: #94A3B8;
+  padding: 3.5rem 0 1.5rem 0;
+  margin-top: auto;
+}
+
+.footer-rakt h5 {
+  color: white;
+  font-size: 1.05rem;
+  margin-bottom: 1.25rem;
+}
+
+.footer-rakt a {
+  color: #94A3B8;
+  text-decoration: none;
+  transition: var(--transition);
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.footer-rakt a:hover {
+  color: white;
+  padding-left: 4px;
+}
+
+.footer-bottom {
+  border-top: 1px solid #1E293B;
+  padding-top: 1.5rem;
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+}
+
+/* Medical Disclaimer Box */
+.medical-disclaimer-box {
+  background-color: #FEF3C7;
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.15rem;
+  color: #92400E;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* Flash alerts */
+.alert-custom {
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  border: none;
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+
+/* Print styling */
+@media print {
+  .no-print, .demo-banner, .navbar-custom, .footer-rakt, .btn {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .card-rakt {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}

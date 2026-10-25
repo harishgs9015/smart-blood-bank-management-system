@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Track Blood Request Status - Smart Blood Bank Network{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4 text-center">
+        <h2 class="fs-3 fw-bold mb-1">Track Blood Request Status</h2>
+        <p class="text-muted small">Enter your unique reference tracking code (e.g. <code>REQ-2026-DL8921</code>) to check live verification and allotment progress.</p>
+      </div>
+
+      <!-- Search Input Card -->
+      <div class="card card-rakt p-4 mb-4">
+        <form method="GET" action="{{ url_for('public.track_request') }}" class="row g-2">
+          <div class="col-md-9">
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="fa-solid fa-barcode text-muted"></i></span>
+              <input type="text" class="form-control text-uppercase font-monospace" name="code" value="{{ code or '' }}" placeholder="Enter Tracking Code (e.g. REQ-2026-DL8921)" required>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-rakt-primary w-100">
+              <i class="fa-solid fa-magnifying-glass me-1"></i> Track Case
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {% if request_data %}
+      <!-- Case Details Card -->
+      <div class="card card-rakt shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+        <div class="card-rakt-header bg-light d-flex justify-content-between align-items-center">
+          <div>
+            <span class="small text-muted text-uppercase fw-bold">Case Reference</span>
+            <div class="font-monospace fs-5 fw-bold text-danger">{{ request_data.tracking_code }}</div>
+          </div>
+          <div>
+            {% if request_data.status == 'fulfilled' %}
+              <span class="badge bg-success fs-6"><i class="fa-solid fa-circle-check me-1"></i> Fulfilled</span>
+            {% elif request_data.status == 'hospital_assigned' %}
+              <span class="badge bg-primary fs-6"><i class="fa-solid fa-hospital me-1"></i> Center Assigned</span>
+            {% elif request_data.status == 'verified' %}
+              <span class="badge bg-info text-dark fs-6"><i class="fa-solid fa-shield-check me-1"></i> Prescription Verified</span>
+            {% elif request_data.status == 'cancelled' %}
+              <span class="badge bg-secondary fs-6"><i class="fa-solid fa-ban me-1"></i> Cancelled</span>
+            {% else %}
+              <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-clock me-1"></i> Under Verification</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-rakt-body p-4">
+          <!-- Timeline Progress -->
+          <div class="booking-step-indicator mb-4">
+            <div class="step-item completed">
+              <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+              <div class="step-title">Submitted</div>
+            </div>
+            <div class="step-item {% if request_data.status in ['verified', 'hospital_assigned', 'fulfilled'] %}completed{% else %}active{% endif %}">
+              <div class="step-circle">{% if request_data.status in ['verified', 'hospital_assigned', 'fulfilled'] %}<i class="fa-solid fa-check"></i>{% else %}2{% endif %}</div>
+              <div class="step-title">Medical Verification</div>
+            </div>
+            <div class="step-item {% if request_data.status in ['hospital_assigned', 'fulfilled'] %}completed{% elif request_data.status == 'verified' %}active{% endif %}">
+              <div class="step-circle">{% if request_data.status in ['hospital_assigned', 'fulfilled'] %}<i class="fa-solid fa-check"></i>{% else %}3{% endif %}</div>
+              <div class="step-title">Center Allotment</div>
+            </div>
+            <div class="step-item {% if request_data.status == 'fulfilled' %}completed{% endif %}">
+              <div class="step-circle">{% if request_data.status == 'fulfilled' %}<i class="fa-solid fa-check"></i>{% else %}4{% endif %}</div>
+              <div class="step-title">Units Dispensed</div>
+            </div>
+          </div>
+
+          <!-- Patient & Hospital Info Table -->
+          <div class="p-3 bg-light rounded-3 mb-3">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <span class="text-muted small">Patient Name:</span>
+                <div class="fw-bold">{{ request_data.patient_name }}</div>
+              </div>
+              <div class="col-md-3">
+                <span class="text-muted small">Blood Group:</span>
+                <div><span class="badge badge-blood-group">{{ request_data.blood_group }}</span></div>
+              </div>
+              <div class="col-md-3">
+                <span class="text-muted small">Units Required:</span>
+                <div class="fw-bold fs-6">{{ request_data.units_needed }} Units</div>
+              </div>
+              <div class="col-md-6">
+                <span class="text-muted small">Treating Hospital:</span>
+                <div class="fw-bold">{{ request_data.hospital_name }} ({{ request_data.hospital_district }})</div>
+              </div>
+              <div class="col-md-6">
+                <span class="text-muted small">Doctor Case Ref:</span>
+                <div class="font-monospace fw-bold">{{ request_data.doctor_case_ref }}</div>
+              </div>
+            </div>
+          </div>
+
+          {% if request_data.assigned_hospital_name %}
+          <div class="p-3 border rounded-3 bg-white mb-3">
+            <div class="fw-bold text-success mb-1">
+              <i class="fa-solid fa-hospital me-1"></i> Assigned Blood Bank Center
+            </div>
+            <div class="small text-dark">{{ request_data.assigned_hospital_name }}</div>
+            <div class="small text-muted mt-1">
+              Please present this tracking reference code at the blood center transfusion desk along with original patient prescription.
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Status Audit Trail -->
+          <div class="border-top pt-3">
+            <h6 class="fs-6 fw-bold mb-2">Progress History Trail:</h6>
+            <ul class="list-unstyled mb-0 small">
+              {% for entry in request_data.status_history %}
+              <li class="mb-2">
+                <i class="fa-solid fa-circle-check text-success me-2"></i>
+                <strong>{{ entry.status|replace('_', ' ')|capitalize }}:</strong> {{ entry.note }}
+                <span class="text-muted ms-2">({{ entry.timestamp|format_date }})</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% elif searched %}
+      <div class="card card-rakt p-5 text-center">
+        <i class="fa-solid fa-file-circle-xmark fs-1 text-muted mb-2"></i>
+        <h5 class="fs-5 fw-bold">Request Not Found</h5>
+        <p class="small text-muted mb-0">Please check the tracking reference code and try again.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

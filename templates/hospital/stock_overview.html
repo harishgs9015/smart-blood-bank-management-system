@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Blood Stock Overview - {{ hospital.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb & Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fa-solid fa-boxes-stacked text-primary me-2"></i> Blood Stock Overview
+      </h3>
+      <p class="text-muted small mb-0">Real-time inventory levels automatically evaluated against minimum safety thresholds</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('hospital.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('hospital.donation_history') }}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-plus me-1"></i> Record Donation
+      </a>
+    </div>
+  </div>
+
+  <!-- Status Legend Callout -->
+  <div class="card card-rakt border-0 shadow-sm rounded-4 mb-4 p-3 bg-light">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="small fw-semibold text-dark">
+        <i class="fa-solid fa-calculator text-primary me-1"></i> Automatic Status Calculation Formula:
+      </div>
+      <div class="d-flex flex-wrap gap-3 small">
+        <span><strong class="text-success">🟢 Normal:</strong> Available &ge; Minimum Required</span>
+        <span><strong class="text-warning-emphasis">🟡 Low:</strong> Available &gt; 40% Minimum Required</span>
+        <span><strong class="text-danger">🔴 Critical:</strong> Available &le; 40% Minimum Required</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blood Stock Cards Grid -->
+  <div class="row g-4 mb-4">
+    {% for s in stocks %}
+      {% set st = s.status %}
+      <div class="col-sm-6 col-md-4 col-lg-4">
+        <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 overflow-hidden hover-shadow transition" 
+             style="cursor: pointer;" 
+             onclick="window.location='{{ url_for('hospital.blood_group_details', blood_group=s.blood_group) }}'">
+          
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <span class="badge bg-danger text-white fs-5 fw-bold px-3 py-2 shadow-sm rounded-3">
+                  {{ s.blood_group }}
+                </span>
+              </div>
+              <div>
+                {% if st == 'Normal' %}
+                  <span class="badge bg-success-subtle text-success border border-success fs-6 px-3 py-1">
+                    🟢 Normal
+                  </span>
+                {% elif st == 'Low' %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning fs-6 px-3 py-1">
+                    🟡 Low
+                  </span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-1">
+                    🔴 Critical
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mt-2 mb-3">
+              <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="text-muted small">Available Units</span>
+                <span class="fs-3 fw-bold text-dark">{{ s.available_units }} <span class="fs-6 text-muted fw-normal">units</span></span>
+              </div>
+              <div class="d-flex justify-content-between align-items-baseline">
+                <span class="text-muted small">Minimum Required Level</span>
+                <span class="fs-6 fw-semibold text-muted">{{ s.minimum_required }} units</span>
+              </div>
+            </div>
+
+            <!-- Visual Progress Bar -->
+            {% set pct = (s.available_units / (s.minimum_required or 10) * 100)|round|int %}
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar {% if st == 'Normal' %}bg-success{% elif st == 'Low' %}bg-warning{% else %}bg-danger{% endif %}" 
+                   role="progressbar" 
+                   style="width: {{ [pct, 100]|min }}%;" 
+                   aria-valuenow="{{ s.available_units }}" 
+                   aria-valuemin="0" 
+                   aria-valuemax="{{ s.minimum_required }}"></div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-light border-0 px-4 py-2 d-flex justify-content-between align-items-center">
+            <span class="small text-muted" style="font-size: 0.75rem;">Click to view donors & history</span>
+            <span class="small text-primary fw-semibold">View Details <i class="fa-solid fa-arrow-right ms-1"></i></span>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Detailed Table View -->
+  <div class="card card-rakt border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+      <h5 class="fw-bold mb-0 text-dark">
+        <i class="fa-solid fa-table-list text-primary me-2"></i> Complete Blood Stock Table
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-muted small text-uppercase">
+            <tr>
+              <th class="ps-4">Blood Group</th>
+              <th>Available Units</th>
+              <th>Minimum Required Level</th>
+              <th>Calculated Status</th>
+              <th>Last Updated</th>
+              <th class="pe-4 text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stocks %}
+              {% set st = s.status %}
+              <tr>
+                <td class="ps-4">
+                  <span class="badge bg-danger text-white fw-bold px-3 py-1 fs-6">
+                    {{ s.blood_group }}
+                  </span>
+                </td>
+                <td>
+                  <strong class="fs-5 text-dark">{{ s.available_units }}</strong> units
+                </td>
+                <td>
+                  <span class="fw-semibold text-muted">{{ s.minimum_required }} units</span>
+                </td>
+                <td>
+                  {% if st == 'Normal' %}
+                    <span class="badge bg-success-subtle text-success border border-success px-3 py-1">🟢 Normal</span>
+                  {% elif st == 'Low' %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1">🟡 Low</span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1">🔴 Critical</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="small text-muted">{{ s.last_updated or 'Recent' }}</span>
+                </td>
+                <td class="pe-4 text-end">
+                  <a href="{{ url_for('hospital.blood_group_details', blood_group=s.blood_group) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Details & Donors
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

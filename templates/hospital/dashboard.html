@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}{{ hospital_name }} - Hospital Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Hospital Header Banner -->
+  <div class="card card-rakt border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+    <div class="card-body p-4 text-white" style="background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center shadow" style="width: 64px; height: 64px; font-size: 1.75rem;">
+            <i class="fa-solid fa-hospital"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h3 class="fw-bold mb-0 text-white">{{ hospital_name }}</h3>
+              <span class="badge bg-white text-primary fw-bold px-2 py-1" style="font-size: 0.8rem;">Hospital ID: {{ hospital_id }}</span>
+            </div>
+            <div class="small text-white-50 mt-1 d-flex flex-wrap gap-3">
+              <span><i class="fa-solid fa-location-dot text-warning me-1"></i> Location: <strong class="text-white">{{ location }}</strong></span>
+              <span><i class="fa-solid fa-phone me-1"></i> Contact: <strong class="text-white">{{ hospital.phone or hospital.contact or '+91 44 2829 0200' }}</strong></span>
+              <span><i class="fa-regular fa-envelope me-1"></i> {{ hospital.email or session.email }}</span>
+              <span><i class="fa-solid fa-shield-halved text-success me-1"></i> License: <strong class="text-white">{{ hospital.license_number or 'Verified Center' }}</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('hospital.appointments') }}" class="btn btn-warning text-dark fw-bold shadow-sm">
+            <i class="fa-solid fa-bell me-1"></i> Incoming Requests ({{ pending_count }})
+          </a>
+          <a href="{{ url_for('hospital.donation_history') }}" class="btn btn-light text-primary fw-bold shadow-sm">
+            <i class="fa-solid fa-plus me-1"></i> Record Donation
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Sections Navigation Bar -->
+    <div class="bg-white border-bottom px-4 py-2 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div class="nav nav-pills gap-1">
+        <a class="nav-link py-1 px-3 active bg-primary text-white rounded-pill fw-semibold" href="{{ url_for('hospital.dashboard') }}">
+          <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('hospital.stock_management') }}">
+          <i class="fa-solid fa-boxes-stacked me-1"></i> Blood Stock
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('hospital.donors') }}">
+          <i class="fa-solid fa-users me-1"></i> Donors
+          {% if donors_count > 0 %}
+          <span class="badge bg-secondary-subtle text-dark ms-1">{{ donors_count }}</span>
+          {% endif %}
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('hospital.blood_requests') }}">
+          <i class="fa-solid fa-hand-holding-medical me-1"></i> Blood Requests
+          {% if blood_requests_count > 0 %}
+          <span class="badge bg-danger-subtle text-danger ms-1">{{ blood_requests_count }}</span>
+          {% endif %}
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('hospital.appointments') }}">
+          <i class="fa-solid fa-calendar-check me-1"></i> Appointments / Donation Requests
+          {% if pending_count > 0 %}
+          <span class="badge bg-warning text-dark ms-1">{{ pending_count }} new</span>
+          {% endif %}
+        </a>
+        <a class="nav-link py-1 px-3 text-dark rounded-pill fw-semibold hover-bg" href="{{ url_for('hospital.donation_history') }}">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i> Donation History
+        </a>
+      </div>
+      <div class="small text-muted d-none d-lg-block">
+        <span class="badge bg-light text-primary border">Isolated Hospital Node: {{ hospital_id }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Overview Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Total Stock Units</span>
+          <div class="rounded-circle bg-primary-subtle text-primary p-2"><i class="fa-solid fa-boxes-stacked"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-primary">{{ total_units }}</h3>
+        <span class="small text-muted">Across 9 tracked blood groups</span>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Pending Requests</span>
+          <div class="rounded-circle bg-warning-subtle text-warning-emphasis p-2"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-warning-emphasis">{{ pending_count }}</h3>
+        <span class="small text-muted">Awaiting your approval</span>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Confirmed Appointments</span>
+          <div class="rounded-circle bg-success-subtle text-success p-2"><i class="fa-solid fa-calendar-check"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-success">{{ confirmed_count }}</h3>
+        <span class="small text-muted">Scheduled for collection</span>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="small text-muted fw-semibold">Critical Shortages</span>
+          <div class="rounded-circle bg-danger-subtle text-danger p-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+        <h3 class="fw-bold mb-1 text-danger">{{ critical_count }}</h3>
+        <span class="small text-muted">Groups &le; 40% minimum required</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Blood Stock Quick Overview & Recent Donation Requests -->
+  <div class="row g-4 mb-4">
+    <!-- Blood Stock Preview -->
+    <div class="col-lg-6">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="fa-solid fa-droplet text-danger me-2"></i> Blood Stock Overview
+            </h5>
+            <span class="small text-muted">9 Blood Groups &bull; Auto-Calculated Status</span>
+          </div>
+          <a href="{{ url_for('hospital.stock_management') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Manage Stock</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light text-muted small text-uppercase">
+                <tr>
+                  <th class="ps-4">Group</th>
+                  <th>Available</th>
+                  <th>Min Req</th>
+                  <th class="pe-4 text-end">Calculated Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in stocks %}
+                  {% set st = s.status %}
+                  <tr style="cursor: pointer;" onclick="window.location='{{ url_for('hospital.blood_group_details', blood_group=s.blood_group) }}'">
+                    <td class="ps-4">
+                      <span class="badge bg-danger text-white fw-bold px-2 py-1">
+                        {{ s.blood_group }}
+                      </span>
+                    </td>
+                    <td>
+                      <strong class="fs-6 text-dark">{{ s.available_units }}</strong> units
+                    </td>
+                    <td>
+                      <span class="text-muted small">{{ s.minimum_required }} units</span>
+                    </td>
+                    <td class="pe-4 text-end">
+                      {% if st == 'Normal' %}
+                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">🟢 Normal</span>
+                      {% elif st == 'Low' %}
+                        <span class="badge bg-warning-subtle text-dark border border-warning px-2 py-1">🟡 Low</span>
+                      {% else %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1">🔴 Critical</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Appointments / Donation Requests -->
+    <div class="col-lg-6">
+      <div class="card card-rakt border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="fa-solid fa-inbox text-primary me-2"></i> Appointments / Donation Requests
+            </h5>
+            <span class="small text-muted">Incoming Donor Requests (Strictly for {{ hospital_id }})</span>
+          </div>
+          <a href="{{ url_for('hospital.appointments') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_appointments %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                  <tr>
+                    <th class="ps-4">Donor</th>
+                    <th>Group</th>
+                    <th>Date / Time</th>
+                    <th>Status</th>
+                    <th class="pe-4 text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for a in recent_appointments %}
+                    {% set st = (a.status or 'Pending')|capitalize %}
+                    <tr>
+                      <td class="ps-4">
+                        <div class="fw-bold text-dark">{{ a.donor_name }}</div>
+                        <span class="small text-muted" style="font-size: 0.75rem;">ID: {{ a.donor_id }}</span>
+                      </td>
+                      <td>
+                        <span class="badge bg-danger-subtle text-danger fw-bold border border-danger-subtle">
+                          {{ a.blood_group or a.donor_blood_group }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="small fw-semibold text-dark">{{ a.appointment_date or a.slot_date }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ a.appointment_time or a.slot_time }}</div>
+                      </td>
+                      <td>
+                        {% if st == 'Confirmed' %}
+                          <span class="badge bg-success-subtle text-success border border-success">🟢 Confirmed</span>
+                        {% elif st == 'Rejected' %}
+                          <span class="badge bg-danger-subtle text-danger border border-danger">🔴 Rejected</span>
+                        {% elif st == 'Rescheduled' %}
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">🟡 Rescheduled</span>
+                        {% else %}
+                          <span class="badge bg-warning-subtle text-dark border border-warning-subtle">🟡 Pending</span>
+                        {% endif %}
+                      </td>
+                      <td class="pe-4 text-end">
+                        <a href="{{ url_for('hospital.appointments') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
+                          Review
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="fa-solid fa-envelope-open fs-2 text-secondary opacity-25 mb-2"></i>
+              <p class="small mb-0">No incoming donation requests received yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

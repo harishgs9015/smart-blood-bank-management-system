@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}How It Works & Compatibility Guide - Smart Blood Bank{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <div class="hero-pill mx-auto">
+      <i class="fa-solid fa-circle-info"></i> Education & Guidelines
+    </div>
+    <h1 class="fs-2 fw-bold">How Blood Donation Works in India</h1>
+    <p class="text-muted mx-auto" style="max-width: 680px;">
+      Understanding the national voluntary donation framework, component separation, and ABO/Rh compatibility.
+    </p>
+  </div>
+
+  <!-- Section 1: The Lifecycle -->
+  <div class="row g-4 align-items-center mb-5">
+    <div class="col-lg-6">
+      <h3 class="fs-4 fw-bold text-danger mb-3">1. The Voluntary Donation Framework</h3>
+      <p class="text-secondary">
+        In India, blood transfusion services are governed by the <strong>Drugs and Cosmetics Act (1940)</strong> and the <strong>National Blood Transfusion Council (NBTC)</strong>. Commercial blood selling is strictly prohibited by the Supreme Court of India since 1998; all blood must be sourced via voluntary non-remunerated donors.
+      </p>
+      <p class="text-secondary">
+        Our digital management system connects voluntary donors directly with licensed blood centers. This eliminates artificial middlemen, safeguards donor health intervals, prevents double-booking at camps, and provides verifiable stock transparency.
+      </p>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('donor.book_appointment') }}" class="btn btn-rakt-primary btn-sm">
+          <i class="fa-solid fa-calendar-check me-1"></i> Book a Donation Slot
+        </a>
+        <a href="{{ url_for('public.find_blood') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fa-solid fa-magnifying-glass me-1"></i> Check Available Units
+        </a>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card card-rakt p-4 bg-light border-0">
+        <h5 class="fs-6 fw-bold mb-3"><i class="fa-solid fa-vial-virus text-danger me-2"></i> Mandatory Testing Protocol (India)</h5>
+        <p class="small text-muted mb-2">Every donated unit of blood undergoes mandatory testing before release for transfusion:</p>
+        <ul class="small text-secondary mb-0 ps-3">
+          <li class="mb-1"><strong>HIV 1 & 2</strong> antibodies and p24 antigen screening</li>
+          <li class="mb-1"><strong>Hepatitis B (HBV)</strong> surface antigen (HBsAg)</li>
+          <li class="mb-1"><strong>Hepatitis C (HCV)</strong> antibody screening</li>
+          <li class="mb-1"><strong>Malarial Parasites</strong> peripheral smear / rapid test</li>
+          <li><strong>Syphilis (VDRL / TPHA)</strong> screening</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Blood Group Compatibility Matrix -->
+  <div class="card card-rakt p-4 mb-5" id="compatibility">
+    <div class="text-center mb-4">
+      <h3 class="fs-4 fw-bold text-danger mb-1">2. ABO & Rh Compatibility Guide</h3>
+      <p class="text-muted small">
+        Clear educational reference table showing red blood cell compatibility. Transfusion compatibility must always be verified via clinical cross-matching by a certified pathologist.
+      </p>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+          <tr>
+            <th class="text-start">Blood Group</th>
+            <th>Can Donate Red Cells To</th>
+            <th>Can Receive Red Cells From</th>
+            <th>Status / Characteristics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">O-</span></td>
+            <td><strong>All Groups</strong> (A+, A-, B+, B-, AB+, AB-, O+, O-)</td>
+            <td><span class="badge badge-blood-group">O-</span> only</td>
+            <td><span class="badge bg-danger">Universal Red Cell Donor</span></td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">O+</span></td>
+            <td>O+, A+, B+, AB+</td>
+            <td>O+, O-</td>
+            <td>Most common group in Indian population</td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">A-</span></td>
+            <td>A+, A-, AB+, AB-</td>
+            <td>A-, O-</td>
+            <td>Rare Rh-negative group</td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">A+</span></td>
+            <td>A+, AB+</td>
+            <td>A+, A-, O+, O-</td>
+            <td>Common in North & West India</td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">B-</span></td>
+            <td>B+, B-, AB+, AB-</td>
+            <td>B-, O-</td>
+            <td>Rh-negative group</td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">B+</span></td>
+            <td>B+, AB+</td>
+            <td>B+, B-, O+, O-</td>
+            <td>Very prevalent in India (~34% of donors)</td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">AB-</span></td>
+            <td>AB+, AB-</td>
+            <td>AB-, A-, B-, O-</td>
+            <td>Rarest group (~0.5% in India)</td>
+          </tr>
+          <tr>
+            <td class="text-start fw-bold"><span class="badge badge-blood-group">AB+</span></td>
+            <td>AB+ only</td>
+            <td><strong>All Groups</strong> (A+, A-, B+, B-, AB+, AB-, O+, O-)</td>
+            <td><span class="badge bg-success">Universal Red Cell Recipient</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section 3: Component Therapy -->
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card card-rakt p-4 text-center h-100">
+        <div class="brand-icon-wrapper mx-auto mb-3" style="width: 48px; height: 48px;">
+          <i class="fa-solid fa-circle text-danger"></i>
+        </div>
+        <h5 class="fs-6 fw-bold">Packed Red Blood Cells (PRBC)</h5>
+        <p class="small text-muted mb-0">
+          Carries oxygen to tissues. Stored at 2&deg;C to 6&deg;C for up to 35-42 days. Critical for anemia, trauma, childbirth hemorrhage, and surgeries.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-rakt p-4 text-center h-100">
+        <div class="brand-icon-wrapper mx-auto mb-3" style="width: 48px; height: 48px; background: linear-gradient(135deg, #F59E0B, #D97706);">
+          <i class="fa-solid fa-circle text-warning"></i>
+        </div>
+        <h5 class="fs-6 fw-bold">Platelet Concentrates (RDP/SDP)</h5>
+        <p class="small text-muted mb-0">
+          Essential for blood clotting. Stored at 20&deg;C to 24&deg;C under continuous agitation for only 5 days. Critical for Dengue patients, oncology, and leukemia.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-rakt p-4 text-center h-100">
+        <div class="brand-icon-wrapper mx-auto mb-3" style="width: 48px; height: 48px; background: linear-gradient(135deg, #0284C7, #0369A1);">
+          <i class="fa-solid fa-circle text-info"></i>
+        </div>
+        <h5 class="fs-6 fw-bold">Fresh Frozen Plasma (FFP)</h5>
+        <p class="small text-muted mb-0">
+          Contains vital clotting factors and proteins. Stored frozen at -30&deg;C for up to 1 year. Used in severe burns, liver disease, and coagulopathy.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

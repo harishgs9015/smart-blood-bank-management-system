@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Administration Console - Smart Blood Bank Network{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2 class="fs-3 fw-bold mb-0">System Administration Console</h2>
+        <span class="badge bg-dark"><i class="fa-solid fa-shield-halved me-1"></i> Health Authority Apex</span>
+      </div>
+      <p class="text-muted small mb-0">Platform oversight, clinical establishment verification, audit logs & public request governance.</p>
+    </div>
+
+    <div>
+      <span class="badge bg-danger-subtle text-danger px-3 py-2 border border-danger-subtle">
+        <i class="fa-solid fa-user-lock me-1"></i> Root Administrator
+      </span>
+    </div>
+  </div>
+
+  <!-- Metric Badges Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="card card-rakt p-3 text-center">
+        <div class="fs-3 fw-bold text-dark">{{ metrics.total_users }}</div>
+        <div class="small text-muted">Total Accounts</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="card card-rakt p-3 text-center">
+        <div class="fs-3 fw-bold text-danger">{{ metrics.total_donors }}</div>
+        <div class="small text-muted">Voluntary Donors</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="card card-rakt p-3 text-center">
+        <div class="fs-3 fw-bold text-primary">{{ metrics.verified_hospitals }} / {{ metrics.total_hospitals }}</div>
+        <div class="small text-muted">Verified Centers</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="card card-rakt p-3 text-center">
+        <div class="fs-3 fw-bold text-warning-emphasis">{{ metrics.pending_hospitals }}</div>
+        <div class="small text-muted">Pending Verification</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="card card-rakt p-3 text-center">
+        <div class="fs-3 fw-bold text-success">{{ metrics.total_units }}</div>
+        <div class="small text-muted">Blood Units Active</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="card card-rakt p-3 text-center">
+        <div class="fs-3 fw-bold text-info">{{ metrics.total_appointments }}</div>
+        <div class="small text-muted">Total Bookings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Hospital Verification Queue -->
+  <div class="card card-rakt mb-4 border-warning-subtle">
+    <div class="card-rakt-header bg-warning-subtle">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fa-solid fa-hospital-user text-warning-emphasis fs-5"></i>
+        <div>
+          <h5 class="fs-6 fw-bold mb-0 text-warning-emphasis">Hospital Credential Verification Queue</h5>
+          <span class="small text-muted">Only authorized administrators can verify blood banks and grant stock publishing privileges.</span>
+        </div>
+      </div>
+      <span class="badge bg-warning text-dark">{{ pending_hospitals|length }} Pending Applications</span>
+    </div>
+    <div class="card-rakt-body p-0">
+      {% if pending_hospitals %}
+        <div class="table-responsive">
+          <table class="table table-rakt align-middle">
+            <thead>
+              <tr>
+                <th>Hospital / Facility</th>
+                <th>License / Reg No.</th>
+                <th>State & District</th>
+                <th>Contact Person</th>
+                <th>Phone & Email</th>
+                <th class="text-end">Verification Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in pending_hospitals %}
+              <tr>
+                <td>
+                  <div class="fw-bold">{{ h.name }}</div>
+                  <span class="badge bg-secondary" style="font-size: 0.72rem;">{{ h.facility_type }}</span>
+                  <div class="small text-muted mt-1">{{ h.address }}</div>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border font-monospace fs-6">{{ h.license_number }}</span>
+                </td>
+                <td>
+                  <div>{{ h.district }}</div>
+                  <div class="small text-muted">{{ h.state }}</div>
+                </td>
+                <td>
+                  <div class="fw-semibold">{{ h.contact_person }}</div>
+                </td>
+                <td>
+                  <div class="small"><i class="fa-solid fa-phone me-1"></i> {{ h.phone }}</div>
+                  <div class="small text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ h.email }}</div>
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end gap-2">
+                    <form method="POST" action="{{ url_for('admin.verify_hospital', hospital_id=h._id) }}">
+                      <input type="hidden" name="notes" value="Verified and approved by Central Health Authority DGHS.">
+                      <button type="submit" class="btn btn-sm btn-success py-1 px-3">
+                        <i class="fa-solid fa-check me-1"></i> Approve
+                      </button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('admin.reject_hospital', hospital_id=h._id) }}">
+                      <input type="hidden" name="notes" value="License verification failed on National Portal.">
+                      <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2">
+                        <i class="fa-solid fa-xmark me-1"></i> Reject
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted small">
+          <i class="fa-solid fa-circle-check text-success fs-3 mb-2"></i>
+          <div>All hospital registrations have been reviewed. Verification queue is empty!</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 2. Public Blood Requests Moderation -->
+  <div class="card card-rakt mb-4">
+    <div class="card-rakt-header">
+      <h5 class="fs-6 fw-bold mb-0">
+        <i class="fa-solid fa-truck-medical text-danger me-2"></i> Public Emergency & Urgent Blood Requests
+      </h5>
+      <span class="badge bg-light text-muted">Recent Cases</span>
+    </div>
+    <div class="card-rakt-body p-0">
+      {% if recent_requests %}
+        <div class="table-responsive">
+          <table class="table table-rakt align-middle">
+            <thead>
+              <tr>
+                <th>Tracking Code</th>
+                <th>Patient Name</th>
+                <th>Blood Group</th>
+                <th>Units & Urgency</th>
+                <th>Hospital & Location</th>
+                <th>Requester</th>
+                <th>Status</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in recent_requests %}
+              <tr>
+                <td>
+                  <span class="badge bg-light text-dark border font-monospace">{{ r.tracking_code }}</span>
+                </td>
+                <td>
+                  <div class="fw-bold">{{ r.patient_name }}</div>
+                  <div class="small text-muted">Case: <code>{{ r.doctor_case_ref }}</code></div>
+                </td>
+                <td>
+                  <span class="badge badge-blood-group">{{ r.blood_group }}</span>
+                </td>
+                <td>
+                  <div class="fw-bold">{{ r.units_needed }} units</div>
+                  {% if r.urgency == 'Emergency' %}
+                    <span class="badge bg-danger">Emergency</span>
+                  {% elif r.urgency == 'Urgent' %}
+                    <span class="badge bg-warning text-dark">Urgent</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Standard</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div>{{ r.hospital_name }}</div>
+                  <div class="small text-muted">{{ r.hospital_district }}, {{ r.hospital_state }}</div>
+                </td>
+                <td>
+                  <div class="small fw-semibold">{{ r.requester_name }}</div>
+                  <div class="small text-muted">{{ r.requester_phone }}</div>
+                </td>
+                <td>
+                  {% if r.status == 'verified' %}
+                    <span class="badge bg-success">Verified</span>
+                  {% elif r.status == 'fulfilled' %}
+                    <span class="badge bg-primary">Fulfilled</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Pending Verification</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if r.status == 'pending_verification' %}
+                  <form method="POST" action="{{ url_for('admin.verify_blood_request', request_id=r._id) }}">
+                    <input type="hidden" name="status" value="verified">
+                    <input type="hidden" name="notes" value="Prescription confirmed with treating physician.">
+                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2">
+                      <i class="fa-solid fa-check"></i> Verify
+                    </button>
+                  </form>
+                  {% else %}
+                    <span class="small text-muted"><i class="fa-solid fa-check-double text-success"></i> Done</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted small">No public blood requests found.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 3. Platform Security Audit Trail -->
+  <div class="card card-rakt mb-4">
+    <div class="card-rakt-header">
+      <h5 class="fs-6 fw-bold mb-0">
+        <i class="fa-solid fa-shield-halved text-dark me-2"></i> System Security & Action Audit Trail
+      </h5>
+      <span class="badge bg-light text-muted">Immutable Log</span>
+    </div>
+    <div class="card-rakt-body p-0">
+      {% if audit_logs %}
+        <div class="table-responsive">
+          <table class="table table-rakt align-middle small mb-0">
+            <thead>
+              <tr>
+                <th>Timestamp (UTC)</th>
+                <th>Action Code</th>
+                <th>Operator</th>
+                <th>Role</th>
+                <th>Details</th>
+                <th>IP Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for l in audit_logs %}
+              <tr>
+                <td class="text-nowrap" style="font-size: 0.75rem;">{{ l.timestamp|format_date }}</td>
+                <td><span class="badge bg-dark font-monospace" style="font-size: 0.72rem;">{{ l.action }}</span></td>
+                <td>{{ l.performed_by }}</td>
+                <td><span class="badge bg-secondary" style="font-size: 0.68rem;">{{ l.role }}</span></td>
+                <td>{{ l.details }}</td>
+                <td class="font-monospace text-muted" style="font-size: 0.72rem;">{{ l.ip_address }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted small">No audit logs available.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

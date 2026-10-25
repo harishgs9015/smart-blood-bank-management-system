@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}My Appointments - Smart Blood Donation System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb & Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">
+        <i class="fa-solid fa-calendar-check text-danger me-2"></i> My Appointments
+      </h3>
+      <p class="text-muted small mb-0">Live status of your confirmed, rejected, and rescheduled appointments updated directly by hospital staff</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('donor.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('donor.my_applications') }}" class="btn btn-outline-danger btn-sm">
+        <i class="fa-solid fa-file-lines me-1"></i> My Applications
+      </a>
+      <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-rakt-primary btn-sm">
+        <i class="fa-solid fa-plus me-1"></i> New Request
+      </a>
+    </div>
+  </div>
+
+  <!-- Appointments Grid / Cards -->
+  {% if appointments %}
+    <div class="row g-4">
+      {% for app in appointments %}
+        {% set st = (app.status or 'Pending')|capitalize %}
+        <div class="col-md-6 col-lg-6">
+          <div class="card card-rakt border-0 shadow-sm rounded-4 h-100 overflow-hidden hover-shadow transition">
+            
+            <!-- Card Header with Status Badge -->
+            <div class="card-header bg-white border-bottom pt-3 px-4 pb-3 d-flex justify-content-between align-items-center">
+              <div>
+                <span class="small text-muted d-block" style="font-size: 0.75rem;">Selected Hospital</span>
+                <h5 class="fw-bold text-dark mb-0">{{ app.hospital_name }}</h5>
+                <span class="badge bg-light text-secondary border mt-1">Hospital ID: {{ app.hospital_id }}</span>
+              </div>
+              <div class="text-end">
+                {% if st == 'Confirmed' %}
+                  <span class="badge bg-success text-white fs-6 px-3 py-2 shadow-sm">
+                    🟢 Confirmed
+                  </span>
+                {% elif st == 'Rejected' %}
+                  <span class="badge bg-danger text-white fs-6 px-3 py-2 shadow-sm">
+                    🔴 Rejected
+                  </span>
+                {% elif st == 'Rescheduled' %}
+                  <span class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm">
+                    🟡 Rescheduled
+                  </span>
+                {% elif st == 'Completed' %}
+                  <span class="badge bg-primary text-white fs-6 px-3 py-2 shadow-sm">
+                    🔵 Completed
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary text-white fs-6 px-3 py-2">
+                    🟡 Pending
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Card Body with Schedule & Details -->
+            <div class="card-body px-4 py-3">
+              <div class="row g-3 mb-3">
+                <div class="col-6">
+                  <div class="p-2 bg-light rounded-3 text-center">
+                    <span class="small text-muted d-block" style="font-size: 0.75rem;">Blood Group</span>
+                    <strong class="fs-5 text-danger">{{ app.blood_group or app.donor_blood_group }}</strong>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 bg-light rounded-3 text-center">
+                    <span class="small text-muted d-block" style="font-size: 0.75rem;">Request Reference</span>
+                    <strong class="small text-dark font-monospace">{{ app.request_id or app.booking_reference }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Schedule Display -->
+              <div class="p-3 rounded-3 {% if st == 'Confirmed' %}bg-success-subtle border border-success{% elif st == 'Rescheduled' %}bg-warning-subtle border border-warning{% elif st == 'Rejected' %}bg-danger-subtle border border-danger{% else %}bg-light border{% endif %} mb-3">
+                
+                {% if st == 'Rescheduled' %}
+                  <div class="d-flex align-items-center gap-2 mb-1 text-warning-emphasis fw-bold small">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Hospital Updated Schedule:
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <div>New Date: <strong>{{ app.appointment_date or app.slot_date }}</strong></div>
+                    <div>New Time: <strong>{{ app.appointment_time or app.slot_time }}</strong></div>
+                  </div>
+                  {% if app.rescheduled_from %}
+                    <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                      Previous Slot: <del>{{ app.rescheduled_from }}</del>
+                    </div>
+                  {% endif %}
+
+                {% elif st == 'Confirmed' %}
+                  <div class="d-flex align-items-center gap-2 mb-1 text-success fw-bold small">
+                    <i class="fa-solid fa-circle-check"></i> Confirmed Slot:
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <div>Date: <strong class="text-dark">{{ app.appointment_date or app.slot_date }}</strong></div>
+                    <div>Time: <strong class="text-dark">{{ app.appointment_time or app.slot_time }}</strong></div>
+                  </div>
+                  <div class="small text-success mt-1" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-location-dot me-1"></i> Arrive 15 mins prior with Photo ID.
+                  </div>
+
+                {% elif st == 'Rejected' %}
+                  <div class="text-danger fw-bold small mb-1">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Status: Rejected
+                  </div>
+                  <div class="small text-danger-emphasis">
+                    Reason: {{ app.cancellation_reason or 'Blood bank capacity exceeded or scheduling conflict.' }}
+                  </div>
+
+                {% else %}
+                  <div class="d-flex justify-content-between text-muted small">
+                    <div>Requested Date: <strong class="text-dark">{{ app.appointment_date or app.slot_date }}</strong></div>
+                    <div>Requested Time: <strong class="text-dark">{{ app.appointment_time or app.slot_time }}</strong></div>
+                  </div>
+                  <div class="small text-muted mt-1">
+                    <i class="fa-solid fa-hourglass-start me-1"></i> Awaiting hospital confirmation.
+                  </div>
+                {% endif %}
+
+              </div>
+
+              {% if app.additional_details or app.notes %}
+                <div class="small text-muted mb-2">
+                  <span class="fw-semibold">Notes:</span> {{ app.additional_details or app.notes }}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer bg-light border-0 px-4 py-3 d-flex justify-content-between align-items-center">
+              <span class="small text-muted">
+                <i class="fa-solid fa-user me-1"></i> {{ app.donor_name }}
+              </span>
+              <div class="d-flex gap-2">
+                {% if st in ['Pending', 'Confirmed', 'Rescheduled'] %}
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ loop.index }}">
+                    Cancel
+                  </button>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-dark" onclick="window.print()">
+                  <i class="fa-solid fa-print me-1"></i> Print Slip
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Cancel Modal -->
+        <div class="modal fade" id="cancelModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+              <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold">Cancel Donation Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form method="POST" action="{{ url_for('donor.cancel_appointment', appointment_id=app._id) }}">
+                <div class="modal-body p-4">
+                  <p class="small text-muted mb-3">Are you sure you want to cancel your appointment at <strong>{{ app.hospital_name }}</strong> scheduled for <strong>{{ app.appointment_date or app.slot_date }}</strong>?</p>
+                  <label for="reason{{ loop.index }}" class="form-label small fw-semibold text-muted">Cancellation Reason</label>
+                  <input type="text" class="form-control" id="reason{{ loop.index }}" name="reason" placeholder="Personal emergency, feeling unwell, etc." required>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Keep Appointment</button>
+                  <button type="submit" class="btn btn-danger btn-sm">Confirm Cancellation</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card card-rakt border-0 shadow-sm rounded-4 text-center py-5">
+      <div class="card-body">
+        <i class="fa-solid fa-calendar-xmark fs-1 text-danger opacity-25 mb-3"></i>
+        <h4>No Appointments Found</h4>
+        <p class="text-muted small mb-4">You have not scheduled any blood donation appointments yet.</p>
+        <a href="{{ url_for('donor.find_hospital') }}" class="btn btn-rakt-primary px-4 py-2">
+          <i class="fa-solid fa-hospital me-1"></i> Find Hospital & Schedule Appointment
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
